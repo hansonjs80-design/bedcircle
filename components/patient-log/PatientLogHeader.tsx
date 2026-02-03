@@ -53,7 +53,7 @@ export const PatientLogHeader: React.FC<PatientLogHeaderProps> = ({
             type="date" 
             value={currentDate}
             onChange={(e) => onDateSelect(e.target.value)}
-            className="bg-transparent font-bold text-gray-700 dark:text-gray-200 outline-none text-center cursor-pointer text-xs sm:text-sm w-[75px] xs:w-[85px]"
+            className="bg-transparent font-bold text-gray-700 dark:text-gray-200 outline-none text-center cursor-pointer text-xs sm:text-sm w-[56px] xs:w-[64px]"
           />
           
           <button 
