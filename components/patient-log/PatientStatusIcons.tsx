@@ -1,0 +1,44 @@
+import React from 'react';
+import { Syringe, Hand, Zap, ArrowUpFromLine, Droplet } from 'lucide-react';
+import { PatientVisit } from '../../types';
+
+interface PatientStatusIconsProps {
+  visit: PatientVisit;
+}
+
+export const PatientStatusIcons: React.FC<PatientStatusIconsProps> = ({ visit }) => {
+  // Check if any flag is active to conditionally render padding/container
+  const hasStatus = visit.is_injection || visit.is_fluid || visit.is_manual || visit.is_eswt || visit.is_traction;
+
+  if (!hasStatus) return null;
+
+  return (
+    <div className="flex items-center gap-1 pl-2 shrink-0 select-none">
+      {visit.is_injection && (
+        <div title="주사" className="flex">
+          <Syringe className="w-4 h-4 text-red-500" strokeWidth={2.5} />
+        </div>
+      )}
+      {visit.is_fluid && (
+        <div title="수액" className="flex">
+          <Droplet className="w-4 h-4 text-cyan-500" strokeWidth={2.5} />
+        </div>
+      )}
+      {visit.is_manual && (
+        <div title="도수치료" className="flex">
+          <Hand className="w-4 h-4 text-violet-500" strokeWidth={2.5} />
+        </div>
+      )}
+      {visit.is_eswt && (
+        <div title="충격파" className="flex">
+          <Zap className="w-4 h-4 text-blue-500" strokeWidth={2.5} />
+        </div>
+      )}
+      {visit.is_traction && (
+        <div title="견인" className="flex">
+          <ArrowUpFromLine className="w-4 h-4 text-orange-500" strokeWidth={2.5} />
+        </div>
+      )}
+    </div>
+  );
+};
