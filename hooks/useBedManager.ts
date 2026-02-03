@@ -1,19 +1,19 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { BedState, BedStatus, Preset, TreatmentStep, PatientVisit, QuickTreatment } from '../types';
+import { BedState, BedStatus, Preset, TreatmentStep, QuickTreatment, PatientVisit } from '../types';
 import { useLocalStorage } from './useLocalStorage';
-import { TOTAL_BEDS } from '../constants';
+import { TOTAL_BEDS, STANDARD_TREATMENTS } from '../constants';
 import { supabase, isOnlineMode } from '../lib/supabase';
 import { useBedTimer } from './useBedTimer';
 import { useBedRealtime } from './useBedRealtime';
 import { useWakeLock } from './useWakeLock';
 import { mapBedToDbPayload, calculateRemainingTime } from '../utils/bedLogic';
-import { getAbbreviation, generateTreatmentString, parseTreatmentString } from '../utils/bedUtils';
 import { 
   createCustomPreset, 
   createQuickStep, 
   createSwappedPreset, 
   createTractionPreset 
 } from '../utils/treatmentFactories';
+import { findMatchingPreset, parseTreatmentString } from '../utils/bedUtils';
 
 interface SelectPresetOptions {
   isInjection?: boolean;
@@ -24,11 +24,11 @@ interface SelectPresetOptions {
 }
 
 export const useBedManager = (
-  presets: Preset[],
+  presets: Preset[], 
   quickTreatments: QuickTreatment[],
-  isSoundEnabled: boolean, 
-  onAddVisit?: (data: Partial<PatientVisit>) => void, 
-  onUpdateLog?: (bedId: number, data: Partial<PatientVisit>) => void
+  isSoundEnabled: boolean,
+  onAddVisit?: (data?: Partial<PatientVisit>) => Promise<string>,
+  onUpdateVisit?: (bedId: number, updates: Partial<PatientVisit>) => void
 ) => {
   const [localBeds, setLocalBeds] = useLocalStorage<BedState[]>('physio-beds-v8', 
     Array.from({ length: TOTAL_BEDS }, (_, i) => ({
@@ -56,7 +56,7 @@ export const useBedManager = (
     bedsRef.current = beds;
   }, [beds]);
 
-  // Pass 'beds' to useBedTimer so it can sync with the Web Worker
+  // Pass 'beds' to useBedTimer so it can sync with the Timer
   useBedTimer(setBeds, presets, isSoundEnabled, beds);
   
   const { realtimeStatus } = useBedRealtime(setBeds, setLocalBeds);
@@ -74,7 +74,7 @@ export const useBedManager = (
     const updateWithTimestamp = { ...updates, lastUpdateTimestamp: timestamp };
     
     setBeds(prev => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
-    setLocalBeds(prev => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    setLocalBeds((prev: BedState[]) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
 
     if (isOnlineMode() && supabase) {
       const dbPayload = mapBedToDbPayload(updates);
@@ -105,20 +105,7 @@ export const useBedManager = (
       isManual: options?.isManual || false,
       memos: {}
     });
-
-    if (onAddVisit) {
-      onAddVisit({
-        bed_id: bedId,
-        treatment_name: generateTreatmentString(preset.steps),
-        is_injection: options?.isInjection,
-        is_fluid: options?.isFluid,
-        is_traction: options?.isTraction,
-        is_eswt: options?.isESWT,
-        is_manual: options?.isManual,
-      });
-    }
-
-  }, [presets, updateBedState, onAddVisit]);
+  }, [presets, updateBedState]);
 
   const startCustomPreset = useCallback((bedId: number, name: string, steps: TreatmentStep[], options?: SelectPresetOptions) => {
     if (steps.length === 0) return;
@@ -143,22 +130,9 @@ export const useBedManager = (
       isManual: options?.isManual || false,
       memos: {}
     });
+  }, [updateBedState]);
 
-    if (onAddVisit) {
-      onAddVisit({
-        bed_id: bedId,
-        treatment_name: generateTreatmentString(steps),
-        is_injection: options?.isInjection,
-        is_fluid: options?.isFluid,
-        is_traction: options?.isTraction,
-        is_eswt: options?.isESWT,
-        is_manual: options?.isManual,
-      });
-    }
-
-  }, [updateBedState, onAddVisit]);
-
-  const startQuickTreatment = useCallback((bedId: number, template: QuickTreatment, options?: SelectPresetOptions) => {
+  const startQuickTreatment = useCallback((bedId: number, template: typeof STANDARD_TREATMENTS[0], options?: SelectPresetOptions) => {
     const step = createQuickStep(template.name, template.duration, template.enableTimer, template.color);
     startCustomPreset(bedId, template.name, [step], options);
   }, [startCustomPreset]);
@@ -180,20 +154,7 @@ export const useBedManager = (
         ...options,
         memos: {}
     });
-
-    if (onAddVisit) {
-      onAddVisit({
-        bed_id: bedId,
-        treatment_name: '견인',
-        is_injection: options?.isInjection,
-        is_fluid: options?.isFluid,
-        is_traction: true, 
-        is_eswt: options?.isESWT,
-        is_manual: options?.isManual,
-      });
-    }
-
-  }, [updateBedState, onAddVisit]);
+  }, [updateBedState]);
 
   const nextStep = useCallback((bedId: number) => {
     const bed = bedsRef.current.find(b => b.id === bedId);
@@ -244,6 +205,7 @@ export const useBedManager = (
     const bed = bedsRef.current.find(b => b.id === bedId);
     if (!bed) return;
 
+    // Use factory to generate swapped preset structure
     const swapResult = createSwappedPreset(
       bed.customPreset, 
       bed.currentPresetId, 
@@ -263,6 +225,7 @@ export const useBedManager = (
        }
     };
     
+    // If we swapped the *currently running* step, restart its timer logic
     if (bed.status === BedStatus.ACTIVE && (bed.currentStepIndex === idx1 || bed.currentStepIndex === idx2)) {
        const currentStepItem = swapResult.steps[bed.currentStepIndex];
        updates.remainingTime = currentStepItem.duration;
@@ -272,13 +235,7 @@ export const useBedManager = (
     }
 
     updateBedState(bedId, updates);
-    
-    if (onUpdateLog) {
-        const newTreatmentName = generateTreatmentString(swapResult.steps);
-        onUpdateLog(bedId, { treatment_name: newTreatmentName });
-    }
-
-  }, [presets, updateBedState, onUpdateLog]);
+  }, [presets, updateBedState]);
 
   const togglePause = useCallback((bedId: number) => {
     const bed = bedsRef.current.find(b => b.id === bedId);
@@ -321,187 +278,102 @@ export const useBedManager = (
 
   const toggleFlag = useCallback((bedId: number, flag: keyof BedState) => {
     const bed = bedsRef.current.find(b => b.id === bedId);
-    if (bed) {
-        const newValue = !bed[flag];
-        updateBedState(bedId, { [flag]: newValue });
-        
-        if (onUpdateLog) {
-            let logKey: keyof PatientVisit | undefined;
-            if (flag === 'isInjection') logKey = 'is_injection';
-            else if (flag === 'isFluid') logKey = 'is_fluid';
-            else if (flag === 'isTraction') logKey = 'is_traction';
-            else if (flag === 'isESWT') logKey = 'is_eswt';
-            else if (flag === 'isManual') logKey = 'is_manual';
+    if (bed) updateBedState(bedId, { [flag]: !bed[flag] });
+  }, [updateBedState]);
 
-            if (logKey) {
-                onUpdateLog(bedId, { [logKey]: newValue });
-            }
+  // Restores/Overrides bed state based on Patient Log entry
+  const overrideBedFromLog = useCallback((bedId: number, visit: PatientVisit, forceRestart: boolean) => {
+    const treatmentName = visit.treatment_name || "";
+    const matchingPreset = findMatchingPreset(presets, treatmentName);
+    
+    let steps: TreatmentStep[] = [];
+    let currentPresetId: string | null = null;
+    let customPreset: any = null;
+
+    if (matchingPreset) {
+      steps = matchingPreset.steps;
+      if (!matchingPreset.id.startsWith('restored-')) {
+          currentPresetId = matchingPreset.id;
+      } else {
+          customPreset = matchingPreset;
+      }
+    } else {
+        steps = parseTreatmentString(treatmentName, quickTreatments);
+        if (steps.length > 0) {
+            customPreset = { id: `log-restore-${Date.now()}`, name: treatmentName, steps };
         }
     }
-  }, [updateBedState, onUpdateLog]);
 
-  const updateBedSteps = useCallback((bedId: number, steps: TreatmentStep[]) => {
-      const bed = bedsRef.current.find(b => b.id === bedId);
-      if (!bed) return;
-      
-      const newCustomPreset = { id: 'custom', name: '치료', steps };
-      updateBedState(bedId, { customPreset: newCustomPreset });
+    if (steps.length === 0) return;
 
-      if (onUpdateLog) {
-          const newTreatmentName = generateTreatmentString(steps);
-          onUpdateLog(bedId, { treatment_name: newTreatmentName });
-      }
-  }, [updateBedState, onUpdateLog]);
+    // Check if bed is already active with same treatment to decide whether to restart
+    const bed = bedsRef.current.find(b => b.id === bedId);
+    if (!bed) return;
 
-  const overrideBedFromLog = useCallback((bedId: number, logData: Partial<PatientVisit>, forceRestart: boolean = false) => {
-     const bed = bedsRef.current.find(b => b.id === bedId);
-     if (!bed) return;
+    const currentSteps = bed.customPreset?.steps || presets.find(p => p.id === bed.currentPresetId)?.steps || [];
+    const isStepsChanged = JSON.stringify(steps) !== JSON.stringify(currentSteps);
 
-     // 1. Prepare Status Flags Updates
-     const flagsUpdate: Partial<BedState> = {};
-     if (logData.is_injection !== undefined) flagsUpdate.isInjection = logData.is_injection;
-     if (logData.is_fluid !== undefined) flagsUpdate.isFluid = logData.is_fluid;
-     if (logData.is_traction !== undefined) flagsUpdate.isTraction = logData.is_traction;
-     if (logData.is_eswt !== undefined) flagsUpdate.isESWT = logData.is_eswt;
-     if (logData.is_manual !== undefined) flagsUpdate.isManual = logData.is_manual;
-     
-     // 2. Parse Treatment Steps if provided
-     const newSteps = logData.treatment_name ? parseTreatmentString(logData.treatment_name, quickTreatments) : [];
-
-     // Scenario A: Bed is IDLE or Forced Restart -> Full Reset/Start
-     if (bed.status === BedStatus.IDLE || forceRestart) {
-         if (newSteps.length > 0) {
-             const newCustomPreset = { id: `log-auto-${Date.now()}`, name: '환자 처방', steps: newSteps };
-             const firstStep = newSteps[0];
-             
-             updateBedState(bedId, {
-                 status: BedStatus.ACTIVE,
-                 currentPresetId: newCustomPreset.id,
-                 customPreset: newCustomPreset,
-                 currentStepIndex: 0,
-                 queue: [],
-                 startTime: Date.now(),
-                 remainingTime: firstStep.duration,
-                 originalDuration: firstStep.duration,
-                 isPaused: false,
-                 memos: {}, 
-                 ...flagsUpdate
-             });
-         } else if (forceRestart) {
-             // If forcing restart but no steps, clear it
-             clearBed(bedId);
-         }
-     } 
-     // Scenario B: Bed is ACTIVE -> Smart Update
-     else {
-         const updates: Partial<BedState> = { ...flagsUpdate };
-         
-         // Only update steps/timer if the treatment name ACTUALLY changed
-         if (logData.treatment_name !== undefined) {
-             const currentString = generateTreatmentString(bed.customPreset?.steps || presets.find(p=>p.id===bed.currentPresetId)?.steps || []);
-             
-             if (currentString !== logData.treatment_name) {
-                 if (newSteps.length > 0) {
-                     const newCustomPreset = { id: `synced-${Date.now()}`, name: '로그 동기화', steps: newSteps };
-                     updates.customPreset = newCustomPreset;
-                     updates.currentStepIndex = 0;
-                     updates.remainingTime = newSteps[0].duration;
-                     updates.originalDuration = newSteps[0].duration;
-                     updates.startTime = Date.now();
-                     updates.isPaused = false;
-                 }
-             }
-         }
-
-         if (Object.keys(updates).length > 0) {
-             updateBedState(bedId, updates);
-         }
-     }
-  }, [updateBedState, presets, clearBed, quickTreatments]);
-
-  const moveBedState = useCallback(async (fromId: number, toId: number) => {
-    const sourceBed = bedsRef.current.find(b => b.id === fromId);
-    if (!sourceBed || sourceBed.status === BedStatus.IDLE) return;
-
-    // 1. Calculate current remaining time
-    const currentRemaining = calculateRemainingTime(sourceBed, presets);
-    
-    // 2. Prepare Target State (Copy of Source)
-    const targetUpdates: Partial<BedState> = {
-      status: sourceBed.status,
-      currentPresetId: sourceBed.currentPresetId,
-      customPreset: sourceBed.customPreset,
-      currentStepIndex: sourceBed.currentStepIndex,
-      queue: sourceBed.queue,
-      remainingTime: currentRemaining,
-      originalDuration: sourceBed.originalDuration,
-      startTime: Date.now(), 
-      isPaused: sourceBed.isPaused,
-      isInjection: sourceBed.isInjection,
-      isFluid: sourceBed.isFluid,
-      isTraction: sourceBed.isTraction,
-      isESWT: sourceBed.isESWT,
-      isManual: sourceBed.isManual,
-      memos: { ...sourceBed.memos }
+    const updates: Partial<BedState> = {
+        isInjection: visit.is_injection || false,
+        isFluid: visit.is_fluid || false,
+        isTraction: visit.is_traction || false,
+        isESWT: visit.is_eswt || false,
+        isManual: visit.is_manual || false,
     };
 
-    // 3. Clear Source Bed
-    const sourceUpdates: Partial<BedState> = {
-      status: BedStatus.IDLE,
-      currentPresetId: null,
-      customPreset: null as any,
-      currentStepIndex: 0,
-      queue: [],
-      startTime: null,
-      remainingTime: 0,
-      isPaused: false,
-      isInjection: false,
-      isFluid: false,
-      isTraction: false,
-      isESWT: false,
-      isManual: false,
-      memos: {}
-    };
-
-    // 4. Update Local State (Optimistic)
-    setBeds(prev => prev.map(b => {
-      if (b.id === toId) return { ...b, ...targetUpdates, lastUpdateTimestamp: Date.now() };
-      if (b.id === fromId) return { ...b, ...sourceUpdates, lastUpdateTimestamp: Date.now() };
-      return b;
-    }));
-    
-    // 5. DB Sync (Explicit calls for reliability)
-    if (isOnlineMode() && supabase) {
-       await supabase.from('beds').update(mapBedToDbPayload(targetUpdates)).eq('id', toId);
-       await supabase.from('beds').update(mapBedToDbPayload(sourceUpdates)).eq('id', fromId);
+    if (forceRestart || bed.status !== BedStatus.ACTIVE || isStepsChanged) {
+        // Full Restart
+        const firstStep = steps[0];
+        updates.status = BedStatus.ACTIVE;
+        updates.currentPresetId = currentPresetId;
+        updates.customPreset = customPreset;
+        updates.currentStepIndex = 0;
+        updates.queue = [];
+        updates.startTime = Date.now();
+        updates.remainingTime = firstStep ? firstStep.duration : 0;
+        updates.originalDuration = firstStep ? firstStep.duration : 0;
+        updates.isPaused = false;
+        updates.memos = {};
     }
 
-  }, [presets, setLocalBeds]);
+    updateBedState(bedId, updates);
+  }, [presets, quickTreatments, updateBedState]);
 
+  const moveBedState = useCallback(async (fromBedId: number, toBedId: number) => {
+    const fromBed = bedsRef.current.find(b => b.id === fromBedId);
+    if (!fromBed) return;
 
-  const movePatientToBed = useCallback((oldBedId: number | null, newBedId: number, logData: Partial<PatientVisit>) => {
-      if (oldBedId) clearBed(oldBedId);
+    // Copy state
+    const stateToMove: Partial<BedState> = {
+        status: fromBed.status,
+        currentPresetId: fromBed.currentPresetId,
+        customPreset: fromBed.customPreset,
+        currentStepIndex: fromBed.currentStepIndex,
+        queue: fromBed.queue,
+        startTime: fromBed.startTime,
+        remainingTime: fromBed.remainingTime,
+        originalDuration: fromBed.originalDuration,
+        isPaused: fromBed.isPaused,
+        isInjection: fromBed.isInjection,
+        isFluid: fromBed.isFluid,
+        isTraction: fromBed.isTraction,
+        isESWT: fromBed.isESWT,
+        isManual: fromBed.isManual,
+        memos: fromBed.memos
+    };
 
-      const steps = parseTreatmentString(logData.treatment_name || '', quickTreatments);
-      if (steps.length > 0) {
-          startCustomPreset(newBedId, '이동된 환자', steps, {
-              isInjection: logData.is_injection,
-              isFluid: logData.is_fluid,
-              isTraction: logData.is_traction,
-              isESWT: logData.is_eswt,
-              isManual: logData.is_manual
-          });
-      } else {
-          clearBed(newBedId);
-      }
-  }, [clearBed, startCustomPreset, quickTreatments]);
+    // Apply to destination
+    await updateBedState(toBedId, stateToMove);
 
+    // Clear source
+    clearBed(fromBedId);
+  }, [updateBedState, clearBed]);
 
   return { 
     beds, 
     selectPreset, 
     startCustomPreset, 
-    startQuickTreatment,
+    startQuickTreatment, 
     startTraction,
     nextStep,
     prevStep,
@@ -521,12 +393,15 @@ export const useBedManager = (
       updateBedState(bedId, { memos: newMemos });
     },
     updateBedDuration: (bedId: number, dur: number) => updateBedState(bedId, { startTime: Date.now(), remainingTime: dur, originalDuration: dur, isPaused: false }),
-    updateBedSteps,
+    updateBedSteps: (bedId: number, steps: TreatmentStep[]) => {
+      const bed = bedsRef.current.find(b => b.id === bedId);
+      if (!bed) return;
+      updateBedState(bedId, { customPreset: { id: 'custom', name: '치료', steps } });
+    },
     clearBed, 
     resetAll: () => bedsRef.current.forEach(bed => clearBed(bed.id)),
+    realtimeStatus,
     overrideBedFromLog,
-    movePatientToBed, 
-    moveBedState, 
-    realtimeStatus 
+    moveBedState
   };
 };

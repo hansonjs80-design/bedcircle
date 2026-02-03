@@ -99,8 +99,8 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     if (selectingLogId) {
        logState.updateVisit(selectingLogId, {
          treatment_name: '견인',
-         ...mapOptionsToFlags(options),
-         is_traction: true
+         is_traction: true,
+         ...mapOptionsToFlags(options)
        });
        setSelectingLogId(null);
     } else {

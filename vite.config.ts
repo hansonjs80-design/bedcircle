@@ -41,7 +41,22 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        cleanupOutdatedCaches: true
       }
     })
-  ]
+  ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          icons: ['lucide-react']
+        }
+      }
+    }
+  }
 });
