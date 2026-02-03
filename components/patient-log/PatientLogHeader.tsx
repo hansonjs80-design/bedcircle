@@ -77,10 +77,10 @@ export const PatientLogHeader: React.FC<PatientLogHeaderProps> = ({
         {onClose && (
           <button 
             onClick={onClose}
-            className="p-2 bg-gray-200 dark:bg-slate-700 rounded-full hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors ml-1 shadow-sm active:scale-90"
+            className="p-1.5 bg-gray-200 dark:bg-slate-700 rounded-full hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors ml-1 shadow-sm active:scale-90"
             title="닫기"
           >
-            <X className="w-4.5 h-4.5 text-gray-600 dark:text-gray-300" />
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </button>
         )}
       </div>
