@@ -27,8 +27,13 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   };
 
   const handleDownloadPDF = async () => {
-    const element = document.getElementById('print-target-content');
-    if (!element) return;
+    // Target the specific ID used in this modal, NOT the default ID which might be hidden in PatientLogPanel
+    // This prevents generating empty PDFs
+    const element = document.getElementById('pdf-preview-content-target');
+    if (!element) {
+        console.error("PDF target element not found");
+        return;
+    }
 
     setIsGeneratingPdf(true);
 
@@ -42,6 +47,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
     try {
       // Dynamic import to ensure module is loaded correctly during build and runtime
+      // This fixes the 'Rollup failed to resolve import' error on Vercel
       const html2pdfModule = await import('html2pdf.js');
       const html2pdf = html2pdfModule.default || html2pdfModule;
       
@@ -79,8 +85,9 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
         <div className="relative shadow-2xl animate-in zoom-in-95 duration-300 origin-top">
           {/* A4 Size Container (approx 210mm x 297mm) */}
           <div className="w-[210mm] min-h-[297mm] bg-white text-black origin-top scale-75 sm:scale-90 md:scale-100 transition-transform">
-             {/* Reuse the print view component but force it visible */}
+             {/* Reuse the print view component but force it visible with a UNIQUE ID for PDF generation */}
              <PatientLogPrintView 
+               id="pdf-preview-content-target"
                visits={visits} 
                currentDate={currentDate} 
                className="block w-full h-full" 

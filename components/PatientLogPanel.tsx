@@ -1,3 +1,4 @@
+
 import React, { useState, Suspense } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
 import { PatientLogPrintView } from './patient-log/PatientLogPrintView';
@@ -91,7 +92,12 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
       </div>
 
       {/* Actual Print Content (Always rendered but hidden via CSS until print media query active) */}
-      <PatientLogPrintView visits={visits} currentDate={currentDate} />
+      {/* Use a different ID here to avoid collision with the Modal's ID used by html2pdf */}
+      <PatientLogPrintView 
+        id="native-print-target" 
+        visits={visits} 
+        currentDate={currentDate} 
+      />
 
       {/* Print Preview Modal (Lazy Loaded) */}
       {isPreviewOpen && (
