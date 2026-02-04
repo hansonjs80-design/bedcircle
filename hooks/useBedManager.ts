@@ -68,7 +68,6 @@ export const useBedManager = (
   useWakeLock(hasActiveBeds);
 
   // Activate Audio Wake Lock (Background CPU) if setting is enabled
-  // This is crucial for Mobile Safari/Chrome to keep timers running when screen locks
   useAudioWakeLock(hasActiveBeds, isBackgroundKeepAlive);
 
   useEffect(() => {
@@ -132,7 +131,6 @@ export const useBedManager = (
     const customPreset = createCustomPreset(name, steps);
     const firstStep = steps[0];
 
-    // Auto-create Patient Log Entry
     if (onAddVisit) {
         onAddVisit({
             bed_id: bedId,
@@ -173,12 +171,11 @@ export const useBedManager = (
     const tractionPreset = createTractionPreset(durationMinutes);
     const firstStep = tractionPreset.steps[0];
 
-    // Auto-create Patient Log Entry
     if (onAddVisit) {
         onAddVisit({
             bed_id: bedId,
             treatment_name: '견인', 
-            is_traction: true, // Force true for traction
+            is_traction: true, 
             is_injection: options?.isInjection || false,
             is_fluid: options?.isFluid || false,
             is_eswt: options?.isESWT || false,
@@ -250,7 +247,6 @@ export const useBedManager = (
     const bed = bedsRef.current.find(b => b.id === bedId);
     if (!bed) return;
 
-    // Use factory to generate swapped preset structure
     const swapResult = createSwappedPreset(
       bed.customPreset, 
       bed.currentPresetId, 
@@ -270,7 +266,6 @@ export const useBedManager = (
        }
     };
     
-    // If we swapped the *currently running* step, restart its timer logic
     if (bed.status === BedStatus.ACTIVE && (bed.currentStepIndex === idx1 || bed.currentStepIndex === idx2)) {
        const currentStepItem = swapResult.steps[bed.currentStepIndex];
        updates.remainingTime = currentStepItem.duration;
@@ -327,7 +322,6 @@ export const useBedManager = (
         const newVal = !bed[flag];
         updateBedState(bedId, { [flag]: newVal });
         
-        // Sync Status Flags to Patient Log
         if (onUpdateVisit) {
             const map: Record<string, keyof PatientVisit> = {
                 'isInjection': 'is_injection',
@@ -344,7 +338,6 @@ export const useBedManager = (
     }
   }, [updateBedState, onUpdateVisit]);
 
-  // Restores/Overrides bed state based on Patient Log entry
   const overrideBedFromLog = useCallback((bedId: number, visit: PatientVisit, forceRestart: boolean) => {
     const treatmentName = visit.treatment_name || "";
     const matchingPreset = findMatchingPreset(presets, treatmentName);
@@ -369,7 +362,6 @@ export const useBedManager = (
 
     if (steps.length === 0) return;
 
-    // Check if bed is already active with same treatment to decide whether to restart
     const bed = bedsRef.current.find(b => b.id === bedId);
     if (!bed) return;
 
@@ -385,7 +377,6 @@ export const useBedManager = (
     };
 
     if (forceRestart || bed.status !== BedStatus.ACTIVE || isStepsChanged) {
-        // Full Restart
         const firstStep = steps[0];
         updates.status = BedStatus.ACTIVE;
         updates.currentPresetId = currentPresetId;
@@ -406,7 +397,6 @@ export const useBedManager = (
     const fromBed = bedsRef.current.find(b => b.id === fromBedId);
     if (!fromBed) return;
 
-    // Copy state
     const stateToMove: Partial<BedState> = {
         status: fromBed.status,
         currentPresetId: fromBed.currentPresetId,
@@ -425,10 +415,7 @@ export const useBedManager = (
         memos: fromBed.memos
     };
 
-    // Apply to destination
     await updateBedState(toBedId, stateToMove);
-
-    // Clear source
     clearBed(fromBedId);
   }, [updateBedState, clearBed]);
 
@@ -461,7 +448,6 @@ export const useBedManager = (
       if (!bed) return;
       updateBedState(bedId, { customPreset: { id: 'custom', name: '치료', steps } });
       
-      // Sync steps change to log (Update treatment text)
       if (onUpdateVisit) {
           onUpdateVisit(bedId, { treatment_name: generateTreatmentString(steps) });
       }
