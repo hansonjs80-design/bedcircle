@@ -4,14 +4,25 @@ import { PatientVisit } from '../../types';
 interface PatientLogPrintViewProps {
   visits: PatientVisit[];
   currentDate: string;
+  className?: string; // Allow overriding styles for Preview mode
 }
 
-export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({ visits, currentDate }) => {
+export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({ 
+  visits, 
+  currentDate,
+  className = "hidden print-only-visible print:block" // Default: Hidden on screen, visible on print
+}) => {
   return (
-    <div className="hidden print-only-visible print:block bg-white text-black p-8">
+    <div id="print-target-content" className={`${className} bg-white text-black p-8`}>
       <div className="text-center mb-6 pb-4 border-b-2 border-black">
-         <h1 className="text-2xl font-black mb-1">환자 현황 (Patient Status)</h1>
-         <p className="text-sm font-medium text-gray-600">{currentDate}</p>
+         <h1 className="text-2xl font-black mb-2">환자 현황 (Patient Status)</h1>
+         <div className="flex justify-center items-center gap-3 text-sm">
+            <span className="font-medium text-gray-600">{currentDate}</span>
+            <span className="text-gray-300">|</span>
+            <span className="font-bold border border-black px-2 py-0.5 rounded-sm">
+              총 {visits.length}명
+            </span>
+         </div>
       </div>
 
       {/* Multi-column Layout for Density */}

@@ -94,6 +94,8 @@
           color: black !important;
           height: auto !important;
           overflow: visible !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         /* Hide everything by default, show specific print areas */
         body > * {
@@ -158,7 +160,8 @@
     "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0",
     "workbox-core": "https://esm.sh/workbox-core@^7.4.0",
     "workbox-precaching": "https://esm.sh/workbox-precaching@^7.4.0",
-    "webworker": "https://esm.sh/webworker@^0.8.4"
+    "webworker": "https://esm.sh/webworker@^0.8.4",
+    "html2pdf.js": "https://esm.sh/html2pdf.js@0.10.1"
   }
 }
 </script>

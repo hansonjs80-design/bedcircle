@@ -111,6 +111,7 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
       presets,
       quickTreatments,
       isSoundEnabled, 
+      isBackgroundKeepAlive, // Pass config for audio wake lock
       patientLog.addVisit, 
       handleLogUpdate
   );

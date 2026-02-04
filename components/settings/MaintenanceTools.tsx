@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Check, Copy, RotateCcw } from 'lucide-react';
-import { SUPABASE_INIT_SQL } from '../../constants';
+import { SUPABASE_INIT_SQL } from '../../utils/sqlConstants';
 
 interface MaintenanceToolsProps {
   onResetAllBeds: () => void;

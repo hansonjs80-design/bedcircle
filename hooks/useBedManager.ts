@@ -6,6 +6,7 @@ import { supabase, isOnlineMode } from '../lib/supabase';
 import { useBedTimer } from './useBedTimer';
 import { useBedRealtime } from './useBedRealtime';
 import { useWakeLock } from './useWakeLock';
+import { useAudioWakeLock } from './useAudioWakeLock';
 import { mapBedToDbPayload, calculateRemainingTime } from '../utils/bedLogic';
 import { 
   createCustomPreset, 
@@ -27,6 +28,7 @@ export const useBedManager = (
   presets: Preset[], 
   quickTreatments: QuickTreatment[],
   isSoundEnabled: boolean,
+  isBackgroundKeepAlive: boolean,
   onAddVisit?: (data?: Partial<PatientVisit>) => Promise<string>,
   onUpdateVisit?: (bedId: number, updates: Partial<PatientVisit>) => void
 ) => {
@@ -61,9 +63,13 @@ export const useBedManager = (
   
   const { realtimeStatus } = useBedRealtime(setBeds, setLocalBeds);
 
-  // Activate Wake Lock if any bed is ACTIVE to prevent screen sleep
+  // Activate Wake Lock (Screen) if any bed is ACTIVE
   const hasActiveBeds = beds.some(b => b.status === BedStatus.ACTIVE && !b.isPaused);
   useWakeLock(hasActiveBeds);
+
+  // Activate Audio Wake Lock (Background CPU) if setting is enabled
+  // This is crucial for Mobile Safari/Chrome to keep timers running when screen locks
+  useAudioWakeLock(hasActiveBeds, isBackgroundKeepAlive);
 
   useEffect(() => {
     if (!isOnlineMode()) setBeds(localBeds);

@@ -1,9 +1,8 @@
-
 {
   "name": "PhysioTrack Pro",
   "short_name": "PhysioTrack",
   "description": "Real-time Physical Therapy Management System",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0284c7",

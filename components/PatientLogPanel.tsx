@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState, Suspense } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
 import { PatientLogPrintView } from './patient-log/PatientLogPrintView';
 import { BedStatus } from '../types';
 import { PatientLogHeader } from './patient-log/PatientLogHeader';
 import { PatientLogTable } from './patient-log/PatientLogTable';
+import { Loader2 } from 'lucide-react';
+
+// Lazy Load Print Modal (Contains heavy html2pdf.js)
+const PrintPreviewModal = React.lazy(() => import('./modals/PrintPreviewModal').then(module => ({ default: module.PrintPreviewModal })));
 
 interface PatientLogPanelProps {
   onClose?: () => void;
@@ -11,6 +15,8 @@ interface PatientLogPanelProps {
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
   const { logState, setSelectingLogId, beds, movePatient } = useTreatmentContext();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
   const {
     currentDate,
     setCurrentDate,
@@ -21,8 +27,8 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
     changeDate
   } = logState;
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrintClick = () => {
+    setIsPreviewOpen(true);
   };
 
   // Helper to determine the status of the row based on Bed State
@@ -62,7 +68,7 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
           currentDate={currentDate}
           onDateChange={changeDate}
           onDateSelect={setCurrentDate}
-          onPrint={handlePrint}
+          onPrint={handlePrintClick}
           onClose={onClose}
         />
 
@@ -84,7 +90,24 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
         </div>
       </div>
 
+      {/* Actual Print Content (Always rendered but hidden via CSS until print media query active) */}
       <PatientLogPrintView visits={visits} currentDate={currentDate} />
+
+      {/* Print Preview Modal (Lazy Loaded) */}
+      {isPreviewOpen && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+            <Loader2 className="w-10 h-10 text-white animate-spin" />
+          </div>
+        }>
+          <PrintPreviewModal 
+            isOpen={isPreviewOpen} 
+            onClose={() => setIsPreviewOpen(false)} 
+            visits={visits} 
+            currentDate={currentDate} 
+          />
+        </Suspense>
+      )}
     </>
   );
 };
