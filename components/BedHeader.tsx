@@ -16,7 +16,7 @@ interface BedHeaderProps {
 }
 
 export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onEditClick, onTogglePause, onUpdateDuration }: BedHeaderProps) => {
-  const { movePatient } = useTreatmentContext();
+  const { setMovingPatientState } = useTreatmentContext();
   
   const isOvertime = bed.status === BedStatus.ACTIVE && !!currentStep?.enableTimer && bed.remainingTime <= 0;
   const isBedT = bed.id === 11;
@@ -46,17 +46,13 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
   const handleBedNumberDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (bed.status === BedStatus.IDLE) return;
-
-    const targetStr = prompt(`${bed.id}번 환자를 이동할 방 번호를 입력하세요:`);
-    if (targetStr) {
-      const targetId = parseInt(targetStr);
-      if (!isNaN(targetId) && targetId > 0 && targetId <= 11 && targetId !== bed.id) {
-        movePatient(bed.id, targetId);
-      } else {
-        alert("유효하지 않은 방 번호입니다.");
-      }
-    }
+    
+    // Capture coordinates for smart positioning
+    setMovingPatientState({
+        bedId: bed.id,
+        x: e.clientX,
+        y: e.clientY
+    });
   };
 
   // 헤더 배경색 결정 로직
@@ -77,11 +73,11 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
         - Double Click to Move Patient
       */}
       <div 
-        className="flex items-center justify-center min-w-[1.5rem] sm:min-w-[3rem] -ml-0.5 landscape:-ml-3 lg:landscape:-ml-0.5 cursor-pointer touch-manipulation active:scale-95 transition-transform"
+        className="flex items-center justify-center min-w-[1.5rem] sm:min-w-[3rem] h-full -ml-0.5 landscape:-ml-3 lg:landscape:-ml-0.5 cursor-pointer touch-manipulation active:scale-95 transition-transform select-none"
         onDoubleClick={handleBedNumberDoubleClick}
         title="더블클릭하여 환자 이동"
       >
-        <span className={`font-black leading-none tracking-tighter select-none ${
+        <span className={`font-black leading-none tracking-tighter ${
            bed.status === BedStatus.COMPLETED 
            ? 'text-gray-400 dark:text-gray-600' 
            : isBedT 

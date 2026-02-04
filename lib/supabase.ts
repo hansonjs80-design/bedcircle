@@ -1,21 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Hardcoded defaults updated as per user request
+// Prioritize Environment Variables for Production (Vercel)
+// Use optional chaining to safely access import.meta.env which might be undefined in some contexts
+const ENV_URL = import.meta?.env?.VITE_SUPABASE_URL;
+const ENV_KEY = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
+
+// Hardcoded defaults as fallback (Demo mode)
 const DEFAULT_URL = 'https://uorkjldaplvojhcqlkqq.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmtqbGRhcGx2b2poY3Fsa3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNjI0MTksImV4cCI6MjA4NTYzODQxOX0.ETJDubZgNI3TA2UwW4Rlp6Ohv6mcfOBWXdPIUnPksH4';
 
-// Check Local Storage first, then default to hardcoded values
+// Check Local Storage first, then Env Vars, then Hardcoded defaults
 const getStoredConfig = () => {
   if (typeof window !== 'undefined') {
-    const storedUrl = window.localStorage.getItem('sb_url');
-    const storedKey = window.localStorage.getItem('sb_key');
-    if (storedUrl && storedKey) {
-      return { url: storedUrl, key: storedKey };
+    try {
+      const storedUrl = window.localStorage.getItem('sb_url');
+      const storedKey = window.localStorage.getItem('sb_key');
+      if (storedUrl && storedKey) {
+        return { url: storedUrl, key: storedKey };
+      }
+    } catch (e) {
+      console.warn('LocalStorage access failed', e);
     }
   }
+  
+  // Use Env vars if available, otherwise default
   return { 
-    url: DEFAULT_URL, 
-    key: DEFAULT_KEY 
+    url: ENV_URL || DEFAULT_URL, 
+    key: ENV_KEY || DEFAULT_KEY 
   };
 };
 

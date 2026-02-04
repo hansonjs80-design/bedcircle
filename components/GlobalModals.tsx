@@ -7,6 +7,7 @@ import { generateTreatmentString, findMatchingPreset } from '../utils/bedUtils';
 const SettingsPanel = React.lazy(() => import('./SettingsPanel').then(module => ({ default: module.SettingsPanel })));
 const PresetSelectorModal = React.lazy(() => import('./PresetSelectorModal').then(module => ({ default: module.PresetSelectorModal })));
 const BedEditOverlay = React.lazy(() => import('./BedEditOverlay').then(module => ({ default: module.BedEditOverlay })));
+const BedMoveModal = React.lazy(() => import('./modals/BedMoveModal').then(module => ({ default: module.BedMoveModal })));
 
 interface GlobalModalsProps {
   isMenuOpen: boolean;
@@ -25,6 +26,9 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     setSelectingLogId,
     editingBedId,
     setEditingBedId,
+    movingPatientState,
+    setMovingPatientState,
+    movePatient,
     selectPreset,
     startCustomPreset,
     startQuickTreatment,
@@ -97,11 +101,14 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   
   const handleStartTraction = (bedId: number, duration: number, options: any) => {
     if (selectingLogId) {
-       logState.updateVisit(selectingLogId, {
+       // Merge options and force is_traction=true using a new object to avoid duplicate key error
+       const { is_traction: _ignored, ...otherFlags } = mapOptionsToFlags(options);
+       const updatePayload = {
          treatment_name: '견인',
-         is_traction: true,
-         ...mapOptionsToFlags(options)
-       });
+         ...otherFlags,
+         is_traction: true
+       };
+       logState.updateVisit(selectingLogId, updatePayload);
        setSelectingLogId(null);
     } else {
        startTraction(bedId, duration, options);
@@ -194,6 +201,16 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
           onToggleManual={toggleManual}
           onUpdateSteps={updateBedSteps}
           onUpdateDuration={updateBedDuration}
+        />
+      )}
+
+      {/* Bed Move Modal (Smart Position) */}
+      {movingPatientState !== null && (
+        <BedMoveModal 
+          fromBedId={movingPatientState.bedId}
+          initialPos={{ x: movingPatientState.x, y: movingPatientState.y }}
+          onClose={() => setMovingPatientState(null)}
+          onConfirm={(toBedId) => movePatient(movingPatientState.bedId, toBedId)}
         />
       )}
 

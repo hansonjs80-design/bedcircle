@@ -13,7 +13,7 @@ import {
   createSwappedPreset, 
   createTractionPreset 
 } from '../utils/treatmentFactories';
-import { findMatchingPreset, parseTreatmentString } from '../utils/bedUtils';
+import { findMatchingPreset, parseTreatmentString, generateTreatmentString } from '../utils/bedUtils';
 
 interface SelectPresetOptions {
   isInjection?: boolean;
@@ -88,6 +88,19 @@ export const useBedManager = (
     if (!preset) return;
     const firstStep = preset.steps[0];
     
+    // Auto-create Patient Log Entry
+    if (onAddVisit) {
+        onAddVisit({
+            bed_id: bedId,
+            treatment_name: generateTreatmentString(preset.steps),
+            is_injection: options?.isInjection || false,
+            is_fluid: options?.isFluid || false,
+            is_traction: options?.isTraction || false,
+            is_eswt: options?.isESWT || false,
+            is_manual: options?.isManual || false,
+        });
+    }
+
     updateBedState(bedId, {
       status: BedStatus.ACTIVE,
       currentPresetId: presetId,
@@ -105,13 +118,26 @@ export const useBedManager = (
       isManual: options?.isManual || false,
       memos: {}
     });
-  }, [presets, updateBedState]);
+  }, [presets, updateBedState, onAddVisit]);
 
   const startCustomPreset = useCallback((bedId: number, name: string, steps: TreatmentStep[], options?: SelectPresetOptions) => {
     if (steps.length === 0) return;
     
     const customPreset = createCustomPreset(name, steps);
     const firstStep = steps[0];
+
+    // Auto-create Patient Log Entry
+    if (onAddVisit) {
+        onAddVisit({
+            bed_id: bedId,
+            treatment_name: generateTreatmentString(steps),
+            is_injection: options?.isInjection || false,
+            is_fluid: options?.isFluid || false,
+            is_traction: options?.isTraction || false,
+            is_eswt: options?.isESWT || false,
+            is_manual: options?.isManual || false,
+        });
+    }
 
     updateBedState(bedId, {
       status: BedStatus.ACTIVE,
@@ -130,7 +156,7 @@ export const useBedManager = (
       isManual: options?.isManual || false,
       memos: {}
     });
-  }, [updateBedState]);
+  }, [updateBedState, onAddVisit]);
 
   const startQuickTreatment = useCallback((bedId: number, template: typeof STANDARD_TREATMENTS[0], options?: SelectPresetOptions) => {
     const step = createQuickStep(template.name, template.duration, template.enableTimer, template.color);
@@ -140,6 +166,19 @@ export const useBedManager = (
   const startTraction = useCallback((bedId: number, durationMinutes: number, options: any) => {
     const tractionPreset = createTractionPreset(durationMinutes);
     const firstStep = tractionPreset.steps[0];
+
+    // Auto-create Patient Log Entry
+    if (onAddVisit) {
+        onAddVisit({
+            bed_id: bedId,
+            treatment_name: '견인', 
+            is_traction: true, // Force true for traction
+            is_injection: options?.isInjection || false,
+            is_fluid: options?.isFluid || false,
+            is_eswt: options?.isESWT || false,
+            is_manual: options?.isManual || false,
+        });
+    }
 
     updateBedState(bedId, {
         status: BedStatus.ACTIVE,
@@ -154,7 +193,7 @@ export const useBedManager = (
         ...options,
         memos: {}
     });
-  }, [updateBedState]);
+  }, [updateBedState, onAddVisit]);
 
   const nextStep = useCallback((bedId: number) => {
     const bed = bedsRef.current.find(b => b.id === bedId);
@@ -278,8 +317,26 @@ export const useBedManager = (
 
   const toggleFlag = useCallback((bedId: number, flag: keyof BedState) => {
     const bed = bedsRef.current.find(b => b.id === bedId);
-    if (bed) updateBedState(bedId, { [flag]: !bed[flag] });
-  }, [updateBedState]);
+    if (bed) {
+        const newVal = !bed[flag];
+        updateBedState(bedId, { [flag]: newVal });
+        
+        // Sync Status Flags to Patient Log
+        if (onUpdateVisit) {
+            const map: Record<string, keyof PatientVisit> = {
+                'isInjection': 'is_injection',
+                'isFluid': 'is_fluid',
+                'isTraction': 'is_traction',
+                'isESWT': 'is_eswt',
+                'isManual': 'is_manual'
+            };
+            const logKey = map[flag as string];
+            if (logKey) {
+                onUpdateVisit(bedId, { [logKey]: newVal });
+            }
+        }
+    }
+  }, [updateBedState, onUpdateVisit]);
 
   // Restores/Overrides bed state based on Patient Log entry
   const overrideBedFromLog = useCallback((bedId: number, visit: PatientVisit, forceRestart: boolean) => {
@@ -397,6 +454,11 @@ export const useBedManager = (
       const bed = bedsRef.current.find(b => b.id === bedId);
       if (!bed) return;
       updateBedState(bedId, { customPreset: { id: 'custom', name: '치료', steps } });
+      
+      // Sync steps change to log (Update treatment text)
+      if (onUpdateVisit) {
+          onUpdateVisit(bedId, { treatment_name: generateTreatmentString(steps) });
+      }
     },
     clearBed, 
     resetAll: () => bedsRef.current.forEach(bed => clearBed(bed.id)),

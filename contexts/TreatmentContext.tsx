@@ -8,6 +8,12 @@ import { usePatientLog } from '../hooks/usePatientLog';
 import { STANDARD_TREATMENTS } from '../constants';
 import { useNotificationBridge } from '../hooks/useNotificationBridge';
 
+interface MovingPatientState {
+  bedId: number;
+  x: number;
+  y: number;
+}
+
 interface TreatmentContextType {
   beds: BedState[];
   presets: Preset[];
@@ -39,6 +45,10 @@ interface TreatmentContextType {
   setSelectingLogId: (id: string | null) => void;
   editingBedId: number | null;
   setEditingBedId: (id: number | null) => void;
+  
+  // Patient Move State (Updated to include coordinates)
+  movingPatientState: MovingPatientState | null;
+  setMovingPatientState: (state: MovingPatientState | null) => void;
   
   // Actions
   selectPreset: (bedId: number, presetId: string, options: any) => void;
@@ -171,6 +181,7 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [selectingBedId, setSelectingBedId] = useState<number | null>(null);
   const [selectingLogId, setSelectingLogId] = useState<string | null>(null);
   const [editingBedId, setEditingBedId] = useState<number | null>(null);
+  const [movingPatientState, setMovingPatientState] = useState<MovingPatientState | null>(null);
 
   const toggleSound = () => setIsSoundEnabled(prev => !prev);
   const toggleBackgroundKeepAlive = () => setIsBackgroundKeepAlive(prev => !prev);
@@ -178,6 +189,8 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
   useNotificationBridge(bedManager.nextStep);
 
   const movePatient = useCallback(async (fromBedId: number, toBedId: number) => {
+    if (fromBedId === toBedId) return;
+
     // 1. Target Bed Check
     const targetBed = bedsRef.current.find(b => b.id === toBedId);
     if (targetBed && targetBed.status === BedStatus.ACTIVE) {
@@ -194,17 +207,27 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
     const latestVisit = visitsForBed[visitsForBed.length - 1];
 
     if (isSourceActive) {
+      // 1. Move Bed State (Visuals/Timer)
       await bedManager.moveBedState(fromBedId, toBedId);
+      
+      // 2. Update Patient Log
       if (latestVisit) {
-        await patientLog.updateVisit(latestVisit.id, { bed_id: toBedId });
+        // Skip Bed Sync here because we just manually moved the state with moveBedState
+        await patientLog.updateVisit(latestVisit.id, { bed_id: toBedId }); 
       }
     } else if (latestVisit) {
+      // Source bed wasn't active (maybe idle but had a log?), just move the log entry and restore
       await patientLog.updateVisit(latestVisit.id, { bed_id: toBedId });
       const updatedVisit = { ...latestVisit, bed_id: toBedId };
-      bedManager.overrideBedFromLog(toBedId, updatedVisit, true);
+      
+      // Clear source just in case
       bedManager.clearBed(fromBedId);
+      
+      // Restore content to new bed
+      bedManager.overrideBedFromLog(toBedId, updatedVisit, true);
     } else {
-       alert("이동할 환자 정보가 없습니다.");
+       // 빈 배드에서 이동을 시도한 경우
+       alert(`${fromBedId}번 배드는 비어있어 이동할 데이터가 없습니다.`);
     }
   }, [bedManager, patientLog.updateVisit]);
 
@@ -233,6 +256,8 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
     setSelectingLogId,
     editingBedId,
     setEditingBedId,
+    movingPatientState,
+    setMovingPatientState,
     movePatient 
   };
 
