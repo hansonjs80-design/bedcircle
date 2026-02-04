@@ -1,3 +1,4 @@
+
 import { BedState, BedStatus, Preset, TreatmentStep, QuickTreatment } from '../types';
 import { STANDARD_TREATMENTS } from '../constants';
 
@@ -37,15 +38,10 @@ export const generateTreatmentString = (steps: TreatmentStep[]) => {
 
 /**
  * Log String(e.g., "HP/ICT")을 분석하여 TreatmentStep 배열로 변환합니다.
- * 로그에서 텍스트를 수정했을 때 배드 상태를 업데이트하기 위해 사용됩니다.
- * customTreatments가 제공되면 해당 리스트를 우선하여 매칭합니다.
  */
 export const parseTreatmentString = (treatmentString: string | null, customTreatments: QuickTreatment[] = []): TreatmentStep[] => {
   if (!treatmentString) return [];
 
-  // Combine custom list with standard fallback, preferring custom
-  // Note: customTreatments might be empty on initial load, so fallback is important.
-  // Actually, customTreatments should replace STANDARD_TREATMENTS if available.
   const referenceList = customTreatments.length > 0 ? customTreatments : STANDARD_TREATMENTS;
 
   const parts = treatmentString.split('/').map(s => s.trim());
@@ -91,8 +87,7 @@ export const findMatchingPreset = (presets: Preset[], treatmentString: string | 
   const exactMatch = presets.find(p => generateTreatmentString(p.steps) === treatmentString);
   if (exactMatch) return exactMatch;
 
-  // 2. Reconstruct from string (using STANDARD for fallback as we don't have quickTreatments context here easily, 
-  // but presets are usually composed of known atoms)
+  // 2. Reconstruct from string
   const reconstructedSteps = parseTreatmentString(treatmentString);
 
   if (reconstructedSteps.length > 0) {
@@ -122,7 +117,6 @@ export const getStepColor = (
   if (isPast) return 'bg-gray-600 dark:bg-slate-700 text-white dark:text-gray-300 border-gray-700 dark:border-slate-600';
   
   if (isActive) {
-    // Custom Color Handling (Arbitrary values like bg-[#123456])
     if (step.color.startsWith('bg-[#')) {
         return `${step.color} text-white border-black/10`;
     }
@@ -138,7 +132,6 @@ export const getStepColor = (
     if (step.color.includes('yellow')) return 'bg-yellow-500 text-white border-yellow-600';
     if (step.color.includes('violet')) return 'bg-violet-500 text-white border-violet-600';
     
-    // Default fallback
     return 'bg-gray-800 text-white border-gray-900';
   }
 

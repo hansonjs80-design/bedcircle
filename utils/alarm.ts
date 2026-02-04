@@ -1,3 +1,4 @@
+
 // 알람, 진동, 시스템 알림 관련 로직 분리
 export const playAlarmPattern = async (bedId?: number, treatmentName?: string, isSilent: boolean = false) => {
   // Mobile/Desktop Vibration Pattern (Total approx 5 seconds)

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { BedState, Preset, BedStatus } from '../types';
 import { calculateRemainingTime } from '../utils/bedLogic';
@@ -49,7 +50,7 @@ export const useBedTimer = (
                          alertedBedsRef.current.add(bed.id);
                      }
                  } else {
-                     // Reset alert tracker if time is added/reset
+                     // Reset alert tracker if time is added/reset (e.g. paused then resumed with more time)
                      alertedBedsRef.current.delete(bed.id);
                  }
              }
@@ -58,6 +59,7 @@ export const useBedTimer = (
              alertedBedsRef.current.delete(bed.id);
           }
 
+          // Only update state if the remaining time actually changed (prevents unnecessary re-renders)
           if (newRemaining !== bed.remainingTime) {
             hasChanges = true;
             return { ...bed, remainingTime: newRemaining };

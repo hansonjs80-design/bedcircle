@@ -1,3 +1,4 @@
+
 import { BedState, BedStatus, Preset } from '../types';
 
 // DB Row -> Partial BedState

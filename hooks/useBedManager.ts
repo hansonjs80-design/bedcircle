@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { BedState, BedStatus, Preset, TreatmentStep, QuickTreatment, PatientVisit } from '../types';
 import { useLocalStorage } from './useLocalStorage';
@@ -58,16 +59,12 @@ export const useBedManager = (
     bedsRef.current = beds;
   }, [beds]);
 
-  // Pass 'beds' to useBedTimer so it can sync with the Timer
   useBedTimer(setBeds, presets, isSoundEnabled, beds);
   
   const { realtimeStatus } = useBedRealtime(setBeds, setLocalBeds);
 
-  // Activate Wake Lock (Screen) if any bed is ACTIVE
   const hasActiveBeds = beds.some(b => b.status === BedStatus.ACTIVE && !b.isPaused);
   useWakeLock(hasActiveBeds);
-
-  // Activate Audio Wake Lock (Background CPU) if setting is enabled
   useAudioWakeLock(hasActiveBeds, isBackgroundKeepAlive);
 
   useEffect(() => {
@@ -78,8 +75,8 @@ export const useBedManager = (
     const timestamp = Date.now();
     const updateWithTimestamp = { ...updates, lastUpdateTimestamp: timestamp };
     
-    setBeds(prev => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
-    setLocalBeds((prev: BedState[]) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    setBeds((prev) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    setLocalBeds((prev: BedState[]) => prev.map((b) => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
 
     if (isOnlineMode() && supabase) {
       const dbPayload = mapBedToDbPayload(updates);
@@ -93,7 +90,6 @@ export const useBedManager = (
     if (!preset) return;
     const firstStep = preset.steps[0];
     
-    // Auto-create Patient Log Entry
     if (onAddVisit) {
         onAddVisit({
             bed_id: bedId,

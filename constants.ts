@@ -1,3 +1,4 @@
+
 import { Preset, TreatmentStep, QuickTreatment } from './types';
 
 export const TOTAL_BEDS = 11;
