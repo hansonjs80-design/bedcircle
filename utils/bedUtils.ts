@@ -36,9 +36,6 @@ export const generateTreatmentString = (steps: TreatmentStep[]) => {
   return steps.map(s => getAbbreviation(s.name)).join('/');
 };
 
-/**
- * Log String(e.g., "HP/ICT")을 분석하여 TreatmentStep 배열로 변환합니다.
- */
 export const parseTreatmentString = (treatmentString: string | null, customTreatments: QuickTreatment[] = []): TreatmentStep[] => {
   if (!treatmentString) return [];
 
@@ -77,9 +74,6 @@ export const parseTreatmentString = (treatmentString: string | null, customTreat
   return reconstructedSteps;
 };
 
-/**
- * Log String과 일치하는 Preset을 찾거나 복원합니다.
- */
 export const findMatchingPreset = (presets: Preset[], treatmentString: string | null): Preset | undefined => {
   if (!treatmentString) return undefined;
 

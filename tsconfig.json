@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -17,6 +18,15 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": "."
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "vite.config.ts"]
+  "include": [
+    "*.ts",
+    "*.tsx",
+    "components/**/*",
+    "contexts/**/*",
+    "hooks/**/*",
+    "lib/**/*",
+    "utils/**/*",
+    "workers/**/*"
+  ],
+  "exclude": ["node_modules", "vite.config.ts", "src", "dist", "build"]
 }

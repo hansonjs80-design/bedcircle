@@ -75,7 +75,7 @@ export const useBedManager = (
     const timestamp = Date.now();
     const updateWithTimestamp = { ...updates, lastUpdateTimestamp: timestamp };
     
-    setBeds((prev) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    setBeds((prev: BedState[]) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
     setLocalBeds((prev: BedState[]) => prev.map((b) => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
 
     if (isOnlineMode() && supabase) {
