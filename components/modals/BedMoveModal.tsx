@@ -1,4 +1,5 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+
+import React, { useState, useRef, useLayoutEffect, memo } from 'react';
 import { ArrowRightLeft, Check, X } from 'lucide-react';
 import { TOTAL_BEDS } from '../../constants';
 
@@ -9,13 +10,13 @@ interface BedMoveModalProps {
   onConfirm: (toBedId: number) => void;
 }
 
-export const BedMoveModal: React.FC<BedMoveModalProps> = ({ fromBedId, initialPos, onClose, onConfirm }) => {
+export const BedMoveModal: React.FC<BedMoveModalProps> = memo(({ fromBedId, initialPos, onClose, onConfirm }) => {
   const [targetBedId, setTargetBedId] = useState<string>('');
   const [pos, setPos] = useState(initialPos);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Smart Positioning: Ensure modal doesn't go off-screen
+  // Smart Positioning
   useLayoutEffect(() => {
     if (modalRef.current) {
       const rect = modalRef.current.getBoundingClientRect();
@@ -25,21 +26,18 @@ export const BedMoveModal: React.FC<BedMoveModalProps> = ({ fromBedId, initialPo
       let newX = initialPos.x;
       let newY = initialPos.y;
 
-      // Horizontal overflow check
       if (newX + rect.width > screenW) {
         newX = screenW - rect.width - 10;
       }
       if (newX < 10) newX = 10;
 
-      // Vertical overflow check
       if (newY + rect.height > screenH) {
-        newY = initialPos.y - rect.height - 10; // Flip to above
+        newY = initialPos.y - rect.height - 10;
       }
       if (newY < 10) newY = 10;
 
       setPos({ x: newX, y: newY });
       
-      // Auto-focus input
       if (inputRef.current) {
         inputRef.current.focus();
       }
@@ -125,4 +123,4 @@ export const BedMoveModal: React.FC<BedMoveModalProps> = ({ fromBedId, initialPo
       </div>
     </div>
   );
-};
+});

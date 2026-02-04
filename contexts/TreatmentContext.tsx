@@ -1,12 +1,13 @@
-import React, { createContext, useContext, ReactNode, useState, useRef, useEffect, useCallback } from 'react';
+
+import React, { createContext, useContext, ReactNode, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BedState, Preset, TreatmentStep, PatientVisit, BedStatus, QuickTreatment } from '../types';
 import { usePresetManager } from '../hooks/usePresetManager';
 import { useQuickTreatmentManager } from '../hooks/useQuickTreatmentManager';
 import { useBedManager } from '../hooks/useBedManager';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { usePatientLog } from '../hooks/usePatientLog'; 
-import { STANDARD_TREATMENTS } from '../constants';
 import { useNotificationBridge } from '../hooks/useNotificationBridge';
+import { usePatientLogContext } from './PatientLogContext';
+import { useTreatmentSettings } from '../hooks/useTreatmentSettings';
+import { useTreatmentUI } from '../hooks/useTreatmentUI';
 
 interface MovingPatientState {
   bedId: number;
@@ -27,17 +28,6 @@ interface TreatmentContextType {
   isBackgroundKeepAlive: boolean;
   toggleBackgroundKeepAlive: () => void;
 
-  // Patient Log (Moved here for shared access)
-  logState: {
-    currentDate: string;
-    setCurrentDate: (date: string) => void;
-    visits: PatientVisit[];
-    addVisit: (data?: Partial<PatientVisit>) => Promise<string>;
-    updateVisit: (id: string, updates: Partial<PatientVisit>, skipBedSync?: boolean) => Promise<void>;
-    deleteVisit: (id: string) => Promise<void>;
-    changeDate: (offset: number) => void;
-  };
-
   // UI State for Modals
   selectingBedId: number | null;
   setSelectingBedId: (id: number | null) => void;
@@ -46,7 +36,7 @@ interface TreatmentContextType {
   editingBedId: number | null;
   setEditingBedId: (id: number | null) => void;
   
-  // Patient Move State (Updated to include coordinates)
+  // Patient Move State
   movingPatientState: MovingPatientState | null;
   setMovingPatientState: (state: MovingPatientState | null) => void;
   
@@ -71,26 +61,29 @@ interface TreatmentContextType {
   clearBed: (bedId: number) => void;
   resetAll: () => void;
   movePatient: (fromBedId: number, toBedId: number) => Promise<void>;
+  
+  // Exposed for Log Component usage
+  updateVisitWithBedSync: (id: string, updates: Partial<PatientVisit>, skipBedSync?: boolean) => Promise<void>;
 }
 
 const TreatmentContext = createContext<TreatmentContextType | undefined>(undefined);
 
 export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // 1. Core Data Managers
   const { presets, updatePresets } = usePresetManager();
   const { quickTreatments, updateQuickTreatments } = useQuickTreatmentManager();
   
-  // Settings persisted in localStorage
-  const [isSoundEnabled, setIsSoundEnabled] = useLocalStorage<boolean>('physio-sound-enabled', false);
-  const [isBackgroundKeepAlive, setIsBackgroundKeepAlive] = useLocalStorage<boolean>('physio-bg-keep-alive', true);
+  // 2. Settings & UI State Hooks (Separated)
+  const settings = useTreatmentSettings();
+  const uiState = useTreatmentUI();
+
+  // 3. Patient Log Integration
+  const { visits, addVisit, updateVisit: updateLogVisit } = usePatientLogContext();
+  const visitsRef = useRef(visits);
   
-  // Initialize Patient Log logic at Provider level
-  const patientLog = usePatientLog();
-  
-  // Use ref to access latest visits inside callback without adding it to dependencies
-  const visitsRef = useRef(patientLog.visits);
   useEffect(() => {
-    visitsRef.current = patientLog.visits;
-  }, [patientLog.visits]);
+    visitsRef.current = visits;
+  }, [visits]);
 
   // Handler to sync bed status changes (Bed -> Log)
   const handleLogUpdate = useCallback((bedId: number, updates: Partial<PatientVisit>) => {
@@ -102,97 +95,72 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
 
      if (bedVisits.length > 0) {
         const lastVisit = bedVisits[bedVisits.length - 1];
-        patientLog.updateVisit(lastVisit.id, updates);
+        updateLogVisit(lastVisit.id, updates);
      }
-  }, [patientLog.updateVisit]);
+  }, [updateLogVisit]);
 
-  // Bed Manager
+  // 4. Bed Logic Manager
   const bedManager = useBedManager(
       presets,
       quickTreatments,
-      isSoundEnabled, 
-      isBackgroundKeepAlive, // Pass config for audio wake lock
-      patientLog.addVisit, 
+      settings.isSoundEnabled, 
+      settings.isBackgroundKeepAlive,
+      addVisit, 
       handleLogUpdate
   );
 
-  // Keep a ref to beds to access latest state in callbacks without re-triggering them
   const bedsRef = useRef(bedManager.beds);
   useEffect(() => {
     bedsRef.current = bedManager.beds;
   }, [bedManager.beds]);
 
-  // --- LOG TO BED SYNC INTERCEPTOR ---
-  const handleUpdateVisitWithSync = useCallback(async (id: string, updates: Partial<PatientVisit>, skipBedSync: boolean = false) => {
-      // 0. Pre-check: Get existing data
+  // 5. Cross-Domain Logic (Bed <-> Log Sync)
+  const updateVisitWithBedSync = useCallback(async (id: string, updates: Partial<PatientVisit>, skipBedSync: boolean = false) => {
       const oldVisit = visitsRef.current.find(v => v.id === id);
       if (!oldVisit) return;
 
       let shouldForceRestart = false;
 
-      // 1. Conflict Check: Is the target bed already ACTIVE? (Only if NOT skipping sync)
+      // Conflict Check
       const targetBedId = updates.bed_id !== undefined ? updates.bed_id : oldVisit.bed_id;
       
       if (!skipBedSync && targetBedId) {
          const isBedAssignmentChange = updates.bed_id !== undefined && updates.bed_id !== oldVisit.bed_id;
          
-         // Only ask for confirmation if the user is changing the BED ID to an occupied one.
-         // If they are just editing the treatment content of the SAME bed, assume it's a desired update.
          if (isBedAssignmentChange) {
              const targetBed = bedsRef.current.find(b => b.id === targetBedId);
              if (targetBed && targetBed.status === BedStatus.ACTIVE) {
-                 const confirmMsg = `${targetBedId}번 배드는 현재 활성화(치료 중) 상태입니다.\n\n새로운 환자로 덮어쓰시겠습니까?`;
-                 if (!window.confirm(confirmMsg)) {
-                     return; // User cancelled
+                 if (!window.confirm(`${targetBedId}번 배드는 현재 활성화(치료 중) 상태입니다.\n\n새로운 환자로 덮어쓰시겠습니까?`)) {
+                     return;
                  }
                  shouldForceRestart = true;
              }
          }
       }
 
-      // 2. Perform Log Update (Database/State)
-      await patientLog.updateVisit(id, updates);
+      await updateLogVisit(id, updates);
 
-      // 3. Bed Sync Logic (Skipped if requested)
       if (skipBedSync) return;
 
       const mergedVisit = { ...oldVisit, ...updates };
 
-      // Scenario: Bed Removal (bed_id set to null)
       if (oldVisit.bed_id && updates.bed_id === null) {
           bedManager.clearBed(oldVisit.bed_id); 
           return;
       }
 
-      // Scenario: Bed Update (Assigning or Updating content)
       if (mergedVisit.bed_id) {
-          // If we moved beds, clear the old one
           if (oldVisit.bed_id && updates.bed_id && oldVisit.bed_id !== updates.bed_id) {
              bedManager.clearBed(oldVisit.bed_id);
              shouldForceRestart = true;
           }
-
-          // Sync content to active bed or start IDLE bed
-          // If the bed is active and ID didn't change, this will trigger the 'Smart Update' logic in bedManager
           bedManager.overrideBedFromLog(mergedVisit.bed_id, mergedVisit, shouldForceRestart);
       }
-
-  }, [patientLog.updateVisit, bedManager]);
-  
-  const [selectingBedId, setSelectingBedId] = useState<number | null>(null);
-  const [selectingLogId, setSelectingLogId] = useState<string | null>(null);
-  const [editingBedId, setEditingBedId] = useState<number | null>(null);
-  const [movingPatientState, setMovingPatientState] = useState<MovingPatientState | null>(null);
-
-  const toggleSound = () => setIsSoundEnabled(prev => !prev);
-  const toggleBackgroundKeepAlive = () => setIsBackgroundKeepAlive(prev => !prev);
-
-  useNotificationBridge(bedManager.nextStep);
+  }, [updateLogVisit, bedManager]);
 
   const movePatient = useCallback(async (fromBedId: number, toBedId: number) => {
     if (fromBedId === toBedId) return;
 
-    // 1. Target Bed Check
     const targetBed = bedsRef.current.find(b => b.id === toBedId);
     if (targetBed && targetBed.status === BedStatus.ACTIVE) {
         if (!window.confirm(`${toBedId}번 배드는 현재 활성화 되어있습니다. 그래도 진행하시겠습니까?\n(기존 내용을 비우고 해당 항목으로 변경됩니다)`)) {
@@ -208,58 +176,35 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
     const latestVisit = visitsForBed[visitsForBed.length - 1];
 
     if (isSourceActive) {
-      // 1. Move Bed State (Visuals/Timer)
       await bedManager.moveBedState(fromBedId, toBedId);
-      
-      // 2. Update Patient Log
       if (latestVisit) {
-        // Skip Bed Sync here because we just manually moved the state with moveBedState
-        await patientLog.updateVisit(latestVisit.id, { bed_id: toBedId }); 
+        await updateLogVisit(latestVisit.id, { bed_id: toBedId }); 
       }
     } else if (latestVisit) {
-      // Source bed wasn't active (maybe idle but had a log?), just move the log entry and restore
-      await patientLog.updateVisit(latestVisit.id, { bed_id: toBedId });
+      await updateLogVisit(latestVisit.id, { bed_id: toBedId });
       const updatedVisit = { ...latestVisit, bed_id: toBedId };
-      
-      // Clear source just in case
       bedManager.clearBed(fromBedId);
-      
-      // Restore content to new bed
       bedManager.overrideBedFromLog(toBedId, updatedVisit, true);
     } else {
-       // 빈 배드에서 이동을 시도한 경우
        alert(`${fromBedId}번 배드는 비어있어 이동할 데이터가 없습니다.`);
     }
-  }, [bedManager, patientLog.updateVisit]);
+  }, [bedManager, updateLogVisit]);
 
+  useNotificationBridge(bedManager.nextStep);
+
+  // Construct Value Object - Note: beds change every second, causing re-creation.
+  // We accept this for now as splitting contexts completely is a larger architectural change.
+  // However, we structure it so hooks are clean.
   const value = {
     presets,
     updatePresets,
     quickTreatments,
     updateQuickTreatments,
-    isSoundEnabled,
-    toggleSound,
-    isBackgroundKeepAlive,
-    toggleBackgroundKeepAlive,
-    logState: {
-      currentDate: patientLog.currentDate,
-      setCurrentDate: patientLog.setCurrentDate,
-      visits: patientLog.visits,
-      addVisit: patientLog.addVisit,
-      updateVisit: handleUpdateVisitWithSync,
-      deleteVisit: patientLog.deleteVisit,
-      changeDate: patientLog.changeDate
-    },
+    ...settings,
+    ...uiState,
     ...bedManager,
-    selectingBedId,
-    setSelectingBedId,
-    selectingLogId,
-    setSelectingLogId,
-    editingBedId,
-    setEditingBedId,
-    movingPatientState,
-    setMovingPatientState,
-    movePatient 
+    movePatient,
+    updateVisitWithBedSync
   };
 
   return (

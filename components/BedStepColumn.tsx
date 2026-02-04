@@ -1,6 +1,8 @@
+
 import React, { memo } from 'react';
 import { TreatmentStep, BedStatus } from '../types';
-import { getAbbreviation, getStepColor } from '../utils/bedUtils';
+import { getAbbreviation } from '../utils/bedUtils';
+import { getStepColor } from '../utils/styleUtils';
 
 interface BedStepColumnProps {
   step: TreatmentStep;
@@ -51,20 +53,18 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
     >
       {/* 
         Top Half: Step Indicator 
-        Mobile Portrait: Fixed height ~30px.
-        Mobile Landscape: Reduced from 28px to 25px (approx 10% reduction).
-        Tablet/Desktop (sm+): flex-1 to fill space.
+        Mobile Portrait: Height increased from 21px to 23px (+10%).
       */}
       <div 
         className={`
-          flex-none h-[30px] sm:flex-1
-          landscape:flex-none landscape:h-[25px] 
+          flex-none h-[23px] sm:flex-1
+          landscape:flex-none landscape:h-[25px] sm:landscape:h-[32px]
           lg:landscape:flex-none lg:landscape:h-[60%] 
           flex flex-col items-center justify-center p-0.5 relative overflow-hidden transition-all cursor-pointer ${colorClass}
           ${isSelectedForSwap ? 'opacity-90' : ''}
         `}
       >
-          <span className={`font-black text-[10px] xs:text-xs sm:text-2xl landscape:text-[9px] sm:landscape:text-[11px] lg:landscape:text-xl text-center leading-tight break-all px-0.5 ${isActive ? 'scale-110' : 'opacity-80'}`}>
+          <span className={`font-black text-sm xs:text-base sm:text-3xl landscape:text-[12px] sm:landscape:text-base lg:landscape:text-xl text-center leading-none break-all px-0.5 ${isActive ? 'scale-110' : 'opacity-80'}`}>
             {getAbbreviation(step.name)}
           </span>
           
@@ -76,14 +76,14 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
           )}
       </div>
 
-      {/* Bottom Half: Memo Field - Positioned directly below step */}
+      {/* Bottom Half: Memo Field - Height increased from 15px to 17px (+10%) */}
       <div 
-        className="w-full h-6 sm:h-8 landscape:h-[16px] sm:landscape:h-[20px] lg:landscape:h-10 shrink-0 bg-gray-50 dark:bg-slate-800/90 border-t border-gray-200 dark:border-slate-700 flex items-center justify-center px-0.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group touch-manipulation select-none overflow-hidden"
+        className="w-full h-[17px] sm:h-8 landscape:h-[16px] sm:landscape:h-[20px] lg:landscape:h-10 shrink-0 bg-gray-50 dark:bg-slate-800/90 border-t border-gray-200 dark:border-slate-700 flex items-center justify-center px-0.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group touch-manipulation select-none overflow-hidden"
         onClick={handleMemoClick}
         onDoubleClick={(e) => e.stopPropagation()}
       >
          {memo ? (
-           <span className="text-[9px] sm:text-xs landscape:text-[8px] sm:landscape:text-[9px] lg:landscape:text-sm leading-none text-center font-bold text-gray-800 dark:text-gray-200 break-words line-clamp-2 w-full pointer-events-none px-0.5">
+           <span className="text-[9px] sm:text-xs landscape:text-[10px] sm:landscape:text-[11px] lg:landscape:text-sm leading-none text-center font-bold text-gray-800 dark:text-gray-200 break-words line-clamp-2 w-full pointer-events-none px-0.5">
              {memo}
            </span>
          ) : (

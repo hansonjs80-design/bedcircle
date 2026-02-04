@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, memo } from 'react';
 import { X, Play, ChevronLeft, Eraser } from 'lucide-react';
 import { Preset, TreatmentStep, QuickTreatment } from '../types';
 import { OptionToggles } from './preset-selector/OptionToggles';
@@ -26,7 +27,7 @@ interface PresetSelectorModalProps {
   initialPreset?: Preset;
 }
 
-export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
+export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
   isOpen,
   onClose,
   presets,
@@ -42,7 +43,6 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
   const [tractionDuration, setTractionDuration] = useState(15);
   const [previewPreset, setPreviewPreset] = useState<Preset | null>(null);
   
-  // Default options state
   const [options, setOptions] = useState({
     isInjection: false,
     isManual: false,
@@ -51,7 +51,6 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
     isFluid: false
   });
 
-  // Reset or Initialize state when modal opens
   useEffect(() => {
     if (isOpen) {
       if (initialOptions) {
@@ -60,9 +59,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
         setOptions({ isInjection: false, isManual: false, isESWT: false, isTraction: false, isFluid: false });
       }
       
-      // If we have an initial preset (smart match from log), go directly to preview
       if (initialPreset) {
-        // Deep copy to ensure we can edit without affecting original until save
         setPreviewPreset(JSON.parse(JSON.stringify(initialPreset)));
       } else {
         setPreviewPreset(null);
@@ -87,7 +84,6 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
     }
   };
 
-  // 단일 항목 클릭 시 미리보기 모드로 진입 (조합 가능하게 변경)
   const handleQuickItemClick = (template: QuickTreatment) => {
     const initialStep: TreatmentStep = {
       id: crypto.randomUUID(),
@@ -99,7 +95,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
 
     setPreviewPreset({
       id: `temp-${Date.now()}`,
-      name: template.name, // 첫 번째 선택한 항목의 이름을 기본으로 사용
+      name: template.name,
       steps: [initialStep]
     });
   };
@@ -110,39 +106,40 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="w-full sm:w-96 max-h-[90vh] bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full sm:w-[520px] max-h-[90vh] sm:max-h-[85vh] bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50 shrink-0">
+        <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50 shrink-0">
           <div className="flex items-center gap-2">
             {previewPreset && (
               <button 
                 onClick={() => setPreviewPreset(null)}
-                className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors mr-1"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors mr-1"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
             )}
             <div>
-              <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase">
+              <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide">
                 {previewPreset ? '치료 구성 확인' : (isTractionBed ? '견인 치료 설정' : (isLogMode ? '처방 수정' : '설정 및 시작'))}
               </span>
-              <h3 className="font-black text-xl text-gray-800 dark:text-white leading-none">
+              <h3 className="font-black text-lg sm:text-xl text-gray-800 dark:text-white leading-none">
                 {isLogMode ? '환자 처방 수정' : (targetBedId === 11 ? '견인기' : `BED ${targetBedId}`)}
               </h3>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 bg-gray-200 dark:bg-slate-700 rounded-full hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+            className="p-1.5 bg-gray-200 dark:bg-slate-700 rounded-full hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
         
         <OptionToggles options={options} setOptions={setOptions} />
 
-        <div className="p-4 overflow-y-auto flex-1 space-y-6">
+        {/* Content Area: Reduced padding on mobile (p-2) to allow 4-col grid to fit better */}
+        <div className="p-2 sm:p-5 overflow-y-auto flex-1 space-y-4 custom-scrollbar">
           {previewPreset ? (
              <TreatmentPreview 
                preset={previewPreset} 
@@ -167,6 +164,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
                 presets={presets} 
                 onSelect={(p) => setPreviewPreset(JSON.parse(JSON.stringify(p)))} 
               />
+              <div className="h-px bg-gray-100 dark:bg-slate-700 my-1" />
               <QuickStartGrid 
                 onQuickStart={handleQuickItemClick} 
               />
@@ -174,11 +172,11 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
           )}
         </div>
         
-        <div className="p-4 bg-gray-50 dark:bg-slate-900/50 text-center border-t border-gray-100 dark:border-slate-700 shrink-0 pb-6 sm:pb-4 flex gap-2">
+        <div className="p-3 sm:px-5 sm:pb-5 bg-gray-50 dark:bg-slate-900/50 text-center border-t border-gray-100 dark:border-slate-700 shrink-0 flex gap-2">
            {isLogMode && onClearLog && (
              <button 
                onClick={() => { onClearLog(); onClose(); }} 
-               className="flex-1 py-3 text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-xl transition-colors flex items-center justify-center gap-1"
+               className="flex-1 py-2.5 text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-xl transition-colors flex items-center justify-center gap-1"
              >
                <Eraser className="w-4 h-4" />
                내용 비우기
@@ -186,7 +184,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
            )}
            <button 
              onClick={onClose} 
-             className={`${isLogMode ? 'flex-1' : 'w-full'} py-3 text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-colors`}
+             className={`${isLogMode ? 'flex-1' : 'w-full'} py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-colors`}
            >
              취소
            </button>
@@ -194,4 +192,4 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = ({
       </div>
     </div>
   );
-};
+});

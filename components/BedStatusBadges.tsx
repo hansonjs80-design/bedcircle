@@ -1,3 +1,4 @@
+
 import React, { memo } from 'react';
 import { Syringe, Hand, Zap, ArrowUpFromLine, Droplet, LucideIcon } from 'lucide-react';
 import { BedState, BedStatus } from '../types';
@@ -55,14 +56,33 @@ export const BedStatusBadges: React.FC<BedStatusBadgesProps> = memo(({ bed }) =>
   if (activeBadges.length === 0) return null;
 
   return (
-    <div className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 landscape:bottom-0.5 landscape:right-0.5 lg:landscape:bottom-1 lg:landscape:right-1 flex flex-wrap justify-end gap-1 z-20 pointer-events-none max-w-full sm:max-w-[80%] landscape:max-w-full scale-90 sm:scale-100 landscape:scale-[0.80] lg:landscape:scale-100 origin-bottom-right">
+    <div className={`
+      flex flex-wrap justify-end gap-1 z-20 pointer-events-none
+      
+      /* Mobile Portrait (Default): Reduced height from 18px to 11px (~40%), removed vertical padding/margin */
+      relative w-full px-1 py-0 min-h-[11px] mt-0 items-center
+      
+      /* Mobile Landscape (<640px): Reduced height by ~30% (30px -> 21px) */
+      landscape:static landscape:w-full landscape:max-w-none landscape:scale-100 landscape:px-2 landscape:py-0 landscape:min-h-[21px] landscape:mt-0.5 landscape:items-center
+      
+      /* Tablet/Desktop Portrait (sm:): Standard Flow */
+      sm:static sm:w-full sm:max-w-none sm:scale-100 sm:px-2 sm:py-1 sm:origin-center sm:mt-0 sm:min-h-0
+      
+      /* Mobile/Tablet Landscape (sm:landscape): Static below memo, Reduced height (18px -> 13px) */
+      sm:landscape:static sm:landscape:w-full sm:landscape:px-2 sm:landscape:py-0 sm:landscape:min-h-[13px] sm:landscape:mt-0 sm:landscape:items-center
+      
+      /* Large Desktop Landscape (lg:landscape): Revert to Absolute Overlay */
+      lg:landscape:absolute lg:landscape:bottom-1 lg:landscape:right-1 lg:landscape:w-auto lg:landscape:scale-100 lg:landscape:min-h-0
+    `}>
       {activeBadges.map((badge) => (
         <div 
           key={badge.label} 
-          className={`flex items-center gap-1 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded shadow-sm border animate-in slide-in-from-right-2 ${badge.colorClass} ${badge.borderClass}`}
+          className={`flex items-center gap-1 backdrop-blur-sm px-1.5 py-0.5 landscape:py-0 rounded shadow-sm border animate-in slide-in-from-right-2 ${badge.colorClass} ${badge.borderClass}`}
         >
-          <span className="text-[9px] sm:text-[10px] lg:text-xs font-black">{badge.label}</span>
-          <badge.icon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 ${badge.iconClass}`} />
+          {/* Mobile Text: 10px (Reduced from 11px for compact fit) */}
+          <span className="text-[10px] sm:text-xs font-black leading-tight">{badge.label}</span>
+          {/* Mobile Icon: w-3 h-3 (Reduced from 3.5) */}
+          <badge.icon className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-4 lg:h-4 ${badge.iconClass}`} />
         </div>
       ))}
     </div>

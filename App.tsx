@@ -1,12 +1,16 @@
+
 import React from 'react';
 import { TreatmentProvider } from './contexts/TreatmentContext';
+import { PatientLogProvider } from './contexts/PatientLogContext';
 import { MainLayout } from './components/MainLayout';
 
 const App: React.FC = () => {
   return (
-    <TreatmentProvider>
-      <MainLayout />
-    </TreatmentProvider>
+    <PatientLogProvider>
+      <TreatmentProvider>
+        <MainLayout />
+      </TreatmentProvider>
+    </PatientLogProvider>
   );
 };
 

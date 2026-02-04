@@ -1,5 +1,7 @@
+
 import React, { Suspense, useMemo } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
+import { usePatientLogContext } from '../contexts/PatientLogContext';
 import { TreatmentStep, QuickTreatment } from '../types';
 import { generateTreatmentString, findMatchingPreset } from '../utils/bedUtils';
 
@@ -41,8 +43,11 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     toggleManual,
     updateBedSteps,
     updateBedDuration,
-    logState
+    updateVisitWithBedSync
   } = useTreatmentContext();
+
+  // Consume visits from PatientLogContext directly
+  const { visits } = usePatientLogContext();
 
   // Helper to map options to log flags
   const mapOptionsToFlags = (options: any) => ({
@@ -59,7 +64,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
       // Logic for Log Editing
       const preset = presets.find(p => p.id === presetId);
       if (preset) {
-        logState.updateVisit(selectingLogId, {
+        updateVisitWithBedSync(selectingLogId, {
           treatment_name: generateTreatmentString(preset.steps),
           ...mapOptionsToFlags(options)
         });
@@ -74,7 +79,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
 
   const handleCustomStart = (bedId: number, name: string, steps: TreatmentStep[], options: any) => {
     if (selectingLogId) {
-       logState.updateVisit(selectingLogId, {
+       updateVisitWithBedSync(selectingLogId, {
          treatment_name: generateTreatmentString(steps),
          ...mapOptionsToFlags(options)
        });
@@ -88,7 +93,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   const handleQuickStart = (bedId: number, template: QuickTreatment, options: any) => {
     if (selectingLogId) {
       // Single step treatment
-      logState.updateVisit(selectingLogId, {
+      updateVisitWithBedSync(selectingLogId, {
         treatment_name: template.label || template.name,
         ...mapOptionsToFlags(options)
       });
@@ -108,7 +113,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
          ...otherFlags,
          is_traction: true
        };
-       logState.updateVisit(selectingLogId, updatePayload);
+       updateVisitWithBedSync(selectingLogId, updatePayload);
        setSelectingLogId(null);
     } else {
        startTraction(bedId, duration, options);
@@ -119,7 +124,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   // Log Mode: Clear content
   const handleClearLog = () => {
     if (selectingLogId) {
-      logState.updateVisit(selectingLogId, {
+      updateVisitWithBedSync(selectingLogId, {
         treatment_name: '',
         is_injection: false,
         is_fluid: false,
@@ -134,8 +139,8 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   // Determine active log entry and initial values for the modal
   const activeLogEntry = useMemo(() => {
     if (!selectingLogId) return null;
-    return logState.visits.find(v => v.id === selectingLogId) || null;
-  }, [selectingLogId, logState.visits]);
+    return visits.find(v => v.id === selectingLogId) || null;
+  }, [selectingLogId, visits]);
 
   // Memoize initial options to pass correct flags to modal
   const modalInitialOptions = useMemo(() => {

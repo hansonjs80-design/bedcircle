@@ -48,6 +48,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     try {
       // Dynamic import to ensure module is loaded correctly during build and runtime
       // This fixes the 'Rollup failed to resolve import' error on Vercel
+      // @ts-ignore
       const html2pdfModule = await import('html2pdf.js');
       const html2pdf = html2pdfModule.default || html2pdfModule;
       

@@ -1,3 +1,4 @@
+
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { BedState, BedStatus, Preset } from '../types';
 import { BedHeader } from './BedHeader';
@@ -5,7 +6,7 @@ import { BedContent } from './BedContent';
 import { BedFooter } from './BedFooter';
 import { BedEmptyState } from './BedEmptyState';
 import { BedStatusBadges } from './BedStatusBadges';
-import { getBedCardStyles } from '../utils/bedUtils';
+import { getBedCardStyles } from '../utils/styleUtils';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
 
 interface BedCardProps {
@@ -90,7 +91,14 @@ export const BedCard: React.FC<BedCardProps> = memo(({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col w-full min-h-0 relative bg-white/40 dark:bg-slate-800/20 backdrop-blur-xs">
-        <div className="flex-1 flex flex-row w-full min-h-0">
+        {/* 
+          BedContent Wrapper
+          - Idle: flex-1 to center
+          - Active (Mobile Portrait): flex-none, h-auto (let content dictate height)
+          - Active (Mobile/Tablet Landscape): sm:landscape:flex-none
+          - Active (Tablet/Desktop): sm:flex-1
+        */}
+        <div className={`${bed.status === BedStatus.IDLE ? 'flex-1' : 'flex-none h-auto sm:flex-1 sm:h-full sm:landscape:flex-none sm:landscape:h-auto lg:landscape:flex-1 lg:landscape:h-full'} flex flex-row w-full min-h-0`}>
           {bed.status === BedStatus.IDLE ? (
             <BedEmptyState onOpenSelector={() => setSelectingBedId(bed.id)} />
           ) : (
@@ -110,8 +118,11 @@ export const BedCard: React.FC<BedCardProps> = memo(({
           )}
         </div>
 
-        {/* Status badges overlay at bottom-right */}
+        {/* Status badges: Static flow below content on mobile */}
         <BedStatusBadges bed={bed} />
+        
+        {/* Spacer for Mobile Portrait to fill remaining height if any (pushes footer down) */}
+        {bed.status !== BedStatus.IDLE && <div className="flex-1 sm:hidden landscape:hidden" />}
       </div>
 
       {bed.status !== BedStatus.IDLE && (
@@ -119,7 +130,7 @@ export const BedCard: React.FC<BedCardProps> = memo(({
           bed={bed} 
           steps={steps} 
           onNext={nextStep} 
-          onPrev={prevStep}
+          onPrev={prevStep} 
           onClear={clearBed} 
         />
       )}
@@ -132,12 +143,12 @@ export const BedCard: React.FC<BedCardProps> = memo(({
     prevProps.bed.currentStepIndex === nextProps.bed.currentStepIndex &&
     prevProps.bed.isPaused === nextProps.bed.isPaused &&
     prevProps.bed.isInjection === nextProps.bed.isInjection &&
-    prevProps.bed.isFluid === nextProps.bed.isFluid && // Added missing check
+    prevProps.bed.isFluid === nextProps.bed.isFluid && 
     prevProps.bed.isManual === nextProps.bed.isManual &&
     prevProps.bed.isESWT === nextProps.bed.isESWT &&
     prevProps.bed.isTraction === nextProps.bed.isTraction &&
     prevProps.bed.customPreset === nextProps.bed.customPreset && 
-    prevProps.presets === nextProps.presets && // Added missing check
+    prevProps.presets === nextProps.presets && 
     prevProps.isCompact === nextProps.isCompact
   );
 });

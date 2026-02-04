@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Menu, Sun, Moon, Download, ClipboardList } from 'lucide-react';
+import { Menu, Sun, Moon, Download, ClipboardList, Maximize } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface AppHeaderProps {
@@ -7,6 +8,7 @@ interface AppHeaderProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onToggleLog: () => void;
+  onToggleFullScreen: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -14,6 +16,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
   onToggleLog,
+  onToggleFullScreen,
 }) => {
   const { isInstallable, install } = usePWAInstall();
 
@@ -38,6 +41,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Full Screen Toggle */}
+          <button 
+            onClick={onToggleFullScreen}
+            className="p-2 landscape:p-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-95"
+            aria-label="Full Screen"
+            title="전체 화면"
+          >
+            <Maximize className="w-6 h-6 landscape:w-5 landscape:h-5" />
+          </button>
+
           {/* Mobile Patient Log Toggle */}
           <button 
             onClick={onToggleLog}

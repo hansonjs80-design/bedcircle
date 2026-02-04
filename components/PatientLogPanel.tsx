@@ -1,6 +1,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
+import { usePatientLogContext } from '../contexts/PatientLogContext';
 import { PatientLogPrintView } from './patient-log/PatientLogPrintView';
 import { BedStatus } from '../types';
 import { PatientLogHeader } from './patient-log/PatientLogHeader';
@@ -15,18 +16,10 @@ interface PatientLogPanelProps {
 }
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
-  const { logState, setSelectingLogId, beds, movePatient } = useTreatmentContext();
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { setSelectingLogId, beds, movePatient, updateVisitWithBedSync } = useTreatmentContext();
+  const { visits, currentDate, setCurrentDate, changeDate, addVisit, deleteVisit } = usePatientLogContext();
   
-  const {
-    currentDate,
-    setCurrentDate,
-    visits,
-    addVisit,
-    updateVisit,
-    deleteVisit,
-    changeDate
-  } = logState;
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handlePrintClick = () => {
     setIsPreviewOpen(true);
@@ -76,7 +69,7 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
         <PatientLogTable 
           visits={visits}
           getRowStatus={getRowStatus}
-          onUpdate={updateVisit}
+          onUpdate={updateVisitWithBedSync}
           onDelete={deleteVisit}
           onCreate={addVisit}
           onSelectLog={setSelectingLogId}

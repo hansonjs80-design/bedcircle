@@ -1,3 +1,4 @@
+
 import React, { memo } from 'react';
 import { TreatmentStep, BedState, BedStatus } from '../types';
 import { BedStepColumn } from './BedStepColumn';
@@ -21,7 +22,8 @@ export const BedContent: React.FC<BedContentProps> = memo(({
   const isCompleted = bed.status === BedStatus.COMPLETED;
 
   return (
-    <div className="w-full h-full flex flex-row divide-x divide-gray-200 dark:divide-slate-700 overflow-hidden">
+    // Mobile Portrait: h-auto (allow stacking). Desktop/Tablet: h-full (fill flex space).
+    <div className="w-full h-auto sm:h-full min-h-[50px] flex flex-row divide-x divide-gray-200 dark:divide-slate-700 overflow-hidden">
       {steps.map((step, idx) => {
         const isActive = idx === bed.currentStepIndex && bed.status === BedStatus.ACTIVE;
         const isPast = !isCompleted && idx < bed.currentStepIndex;
@@ -47,11 +49,6 @@ export const BedContent: React.FC<BedContentProps> = memo(({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // CRITICAL OPTIMIZATION:
-  // Do NOT re-render if only 'remainingTime', 'startTime', 'originalDuration' changed.
-  // These props change every second due to the timer, but BedContent visualization
-  // only cares about which step is active, the status, and memos.
-  
   const pBed = prevProps.bed;
   const nBed = nextProps.bed;
 
@@ -61,7 +58,7 @@ export const BedContent: React.FC<BedContentProps> = memo(({
     pBed.currentStepIndex === nBed.currentStepIndex &&
     pBed.currentPresetId === nBed.currentPresetId &&
     pBed.customPreset === nBed.customPreset &&
-    pBed.memos === nBed.memos && // Reference check is usually enough here
+    pBed.memos === nBed.memos &&
     pBed.queue === nBed.queue;
 
   const isOtherPropsEqual = 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { TreatmentStep, BedState } from '../types';
 import { BedEditHeader } from './bed-edit/BedEditHeader';
 import { BedEditFlags } from './bed-edit/BedEditFlags';
@@ -19,7 +19,7 @@ interface BedEditOverlayProps {
   onUpdateDuration?: (bedId: number, duration: number) => void;
 }
 
-export const BedEditOverlay: React.FC<BedEditOverlayProps> = ({
+export const BedEditOverlay: React.FC<BedEditOverlayProps> = memo(({
   bed,
   steps,
   onClose,
@@ -79,4 +79,4 @@ export const BedEditOverlay: React.FC<BedEditOverlayProps> = ({
       </div>
     </div>
   );
-};
+});
