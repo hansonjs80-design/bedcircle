@@ -1,9 +1,8 @@
+
 import React, { useState } from 'react';
 import { X, Printer, FileDown, CheckCircle, Loader2 } from 'lucide-react';
 import { PatientLogPrintView } from '../patient-log/PatientLogPrintView';
 import { PatientVisit } from '../../types';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 
 interface PrintPreviewModalProps {
   isOpen: boolean;
@@ -42,6 +41,10 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     };
 
     try {
+      // Dynamic import to ensure module is loaded correctly during build and runtime
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+      
       await html2pdf().set(opt).from(element).save();
     } catch (e) {
       console.error("PDF generation failed:", e);
