@@ -75,8 +75,9 @@ export const useBedManager = (
     const timestamp = Date.now();
     const updateWithTimestamp = { ...updates, lastUpdateTimestamp: timestamp };
     
-    setBeds((prev: BedState[]) => prev.map(b => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
-    setLocalBeds((prev: BedState[]) => prev.map((b) => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    // Fix: Explicit types for prev and b to solve TS7006
+    setBeds((prev: BedState[]) => prev.map((b: BedState) => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
+    setLocalBeds((prev: BedState[]) => prev.map((b: BedState) => b.id === bedId ? { ...b, ...updateWithTimestamp } : b));
 
     if (isOnlineMode() && supabase) {
       const dbPayload = mapBedToDbPayload(updates);

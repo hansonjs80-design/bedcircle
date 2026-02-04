@@ -1,9 +1,10 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Prioritize Environment Variables for Production (Vercel)
-// Use optional chaining to safely access import.meta.env which might be undefined in some contexts
-const ENV_URL = import.meta?.env?.VITE_SUPABASE_URL;
-const ENV_KEY = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
+// Use optional chaining for import.meta.env to prevent crashes in non-Vite envs if ever needed
+const ENV_URL = import.meta.env?.VITE_SUPABASE_URL;
+const ENV_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY;
 
 // Hardcoded defaults as fallback (Demo mode)
 const DEFAULT_URL = 'https://uorkjldaplvojhcqlkqq.supabase.co';

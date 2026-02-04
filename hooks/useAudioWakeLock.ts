@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 
 // A tiny silent WAV file (base64 encoded) to keep the audio session active.

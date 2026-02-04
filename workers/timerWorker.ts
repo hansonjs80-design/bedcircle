@@ -1,3 +1,4 @@
+
 /// <reference lib="webworker" />
 // Web Worker for handling precise timing off the main thread
 
