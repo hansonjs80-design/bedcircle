@@ -16,11 +16,13 @@ export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({
   id = "print-target-content"
 }) => {
   return (
-    <div id={id} className={`${className} bg-white text-black p-10`}>
+    <div id={id} className={`${className} bg-white text-black p-8 sm:p-12`}>
       {/* Header: Flexbox for Left Title / Right Info */}
-      <div className="flex justify-between items-end mb-8 pb-4 border-b-2 border-black">
-         <h1 className="text-4xl font-black text-black leading-normal tracking-tight">환자 현황</h1>
-         <div className="flex items-center gap-4 text-sm font-bold text-gray-600 mb-1.5">
+      {/* Increased pb-4 to pb-6 to ensure text stays well above the border line */}
+      <div className="flex justify-between items-end mb-4 pb-6 border-b-2 border-black">
+         {/* Reduced font size (text-2xl -> text-xl) */}
+         <h1 className="text-xl sm:text-2xl font-black text-black leading-snug tracking-tight">환자 현황</h1>
+         <div className="flex items-center gap-3 text-sm font-bold text-gray-600 mb-1.5">
             <span className="text-gray-500">{currentDate}</span>
             <span className="w-px h-3 bg-gray-300"></span>
             <span className="text-black text-base font-black">
@@ -29,47 +31,48 @@ export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({
          </div>
       </div>
 
-      {/* Multi-column Layout for Density */}
-      <div className="columns-2 gap-16 w-full">
+      {/* Single Column Layout (1열) */}
+      <div className="w-full flex flex-col">
          {visits.map((visit, index) => (
            <div 
              key={visit.id} 
-             className="break-inside-avoid page-break-inside-avoid border-b border-gray-200 py-4 flex items-center gap-4 text-sm leading-relaxed"
+             // Darkened border from gray-400 to gray-600 (approx 50% darker)
+             className="break-inside-avoid page-break-inside-avoid border-b border-gray-600 py-2 flex items-center gap-4 sm:gap-6 text-base"
            >
-              {/* No. (Room Number) - Larger Font */}
-              <div className="w-8 shrink-0 font-black text-gray-900 text-center text-lg leading-normal">
+              {/* No. (Room Number) */}
+              <div className="w-10 sm:w-12 shrink-0 font-black text-gray-900 text-center text-lg sm:text-xl">
                  {visit.bed_id || (index + 1)}
               </div>
               
-              {/* Name - Increased width & Font size */}
-              <div className="w-20 shrink-0 font-bold text-base text-gray-900 truncate leading-normal py-0.5">
+              {/* Name */}
+              <div className="w-20 sm:w-24 shrink-0 font-bold text-base sm:text-lg text-gray-900 whitespace-nowrap overflow-visible px-1">
                  {visit.patient_name || "-"}
               </div>
               
-              {/* Body Part - Increased width */}
-              <div className="w-16 shrink-0 font-bold text-gray-500 truncate text-center leading-normal py-0.5">
+              {/* Body Part */}
+              <div className="w-20 sm:w-24 shrink-0 font-bold text-gray-600 text-center whitespace-nowrap overflow-visible px-1">
                  {visit.body_part || "-"}
               </div>
               
-              {/* Treatment - Flex-1 to take available space */}
-              <div className="flex-1 truncate text-gray-800 font-medium leading-normal py-0.5">
+              {/* Treatment */}
+              <div className="flex-1 text-gray-800 font-medium whitespace-nowrap overflow-visible px-1 text-base sm:text-lg">
                  {visit.treatment_name || "-"}
               </div>
               
-              {/* Memo (Visible if present) */}
-              <div className="w-16 shrink-0 text-xs text-gray-400 truncate text-right leading-normal py-0.5">
+              {/* Memo */}
+              <div className="w-32 sm:w-40 shrink-0 text-sm text-gray-500 text-right whitespace-nowrap overflow-visible px-1">
                  {visit.memo || ""}
               </div>
            </div>
          ))}
          
-         {/* 빈 줄 채우기 (종이 느낌) - Optional */}
-         {Array.from({ length: Math.max(0, 24 - visits.length) }).map((_, i) => (
-           <div key={`empty-${i}`} className="break-inside-avoid border-b border-gray-100 py-5"></div>
+         {/* Fill empty space for paper feel - Removed border-b to make lines invisible */}
+         {Array.from({ length: Math.max(0, 15 - visits.length) }).map((_, i) => (
+           <div key={`empty-${i}`} className="break-inside-avoid py-3"></div>
          ))}
       </div>
       
-      <div className="fixed bottom-6 left-0 w-full text-center text-[8pt] text-gray-300 uppercase tracking-wider">
+      <div className="fixed bottom-4 left-0 w-full text-center text-[8pt] text-gray-300 uppercase tracking-wider">
         PhysioTrack Pro - Printed on {new Date().toLocaleString()}
       </div>
     </div>
