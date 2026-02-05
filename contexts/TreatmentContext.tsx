@@ -109,10 +109,19 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
       handleLogUpdate
   );
 
-  const bedsRef = useRef(bedManager.beds);
+  // Destructure bedManager actions to allow stable referencing in callbacks
+  const { 
+    beds, 
+    clearBed, 
+    overrideBedFromLog, 
+    moveBedState,
+    nextStep 
+  } = bedManager;
+
+  const bedsRef = useRef(beds);
   useEffect(() => {
-    bedsRef.current = bedManager.beds;
-  }, [bedManager.beds]);
+    bedsRef.current = beds;
+  }, [beds]);
 
   // 5. Cross-Domain Logic (Bed <-> Log Sync)
   const updateVisitWithBedSync = useCallback(async (id: string, updates: Partial<PatientVisit>, skipBedSync: boolean = false) => {
@@ -145,18 +154,18 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
       const mergedVisit = { ...oldVisit, ...updates };
 
       if (oldVisit.bed_id && updates.bed_id === null) {
-          bedManager.clearBed(oldVisit.bed_id); 
+          clearBed(oldVisit.bed_id); 
           return;
       }
 
       if (mergedVisit.bed_id) {
           if (oldVisit.bed_id && updates.bed_id && oldVisit.bed_id !== updates.bed_id) {
-             bedManager.clearBed(oldVisit.bed_id);
+             clearBed(oldVisit.bed_id);
              shouldForceRestart = true;
           }
-          bedManager.overrideBedFromLog(mergedVisit.bed_id, mergedVisit, shouldForceRestart);
+          overrideBedFromLog(mergedVisit.bed_id, mergedVisit, shouldForceRestart);
       }
-  }, [updateLogVisit, bedManager]);
+  }, [updateLogVisit, clearBed, overrideBedFromLog]); // Stable deps
 
   const movePatient = useCallback(async (fromBedId: number, toBedId: number) => {
     if (fromBedId === toBedId) return;
@@ -176,25 +185,22 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
     const latestVisit = visitsForBed[visitsForBed.length - 1];
 
     if (isSourceActive) {
-      await bedManager.moveBedState(fromBedId, toBedId);
+      await moveBedState(fromBedId, toBedId);
       if (latestVisit) {
         await updateLogVisit(latestVisit.id, { bed_id: toBedId }); 
       }
     } else if (latestVisit) {
       await updateLogVisit(latestVisit.id, { bed_id: toBedId });
       const updatedVisit = { ...latestVisit, bed_id: toBedId };
-      bedManager.clearBed(fromBedId);
-      bedManager.overrideBedFromLog(toBedId, updatedVisit, true);
+      clearBed(fromBedId);
+      overrideBedFromLog(toBedId, updatedVisit, true);
     } else {
        alert(`${fromBedId}번 배드는 비어있어 이동할 데이터가 없습니다.`);
     }
-  }, [bedManager, updateLogVisit]);
+  }, [moveBedState, updateLogVisit, clearBed, overrideBedFromLog]); // Stable deps
 
-  useNotificationBridge(bedManager.nextStep);
+  useNotificationBridge(nextStep);
 
-  // Construct Value Object - Note: beds change every second, causing re-creation.
-  // We accept this for now as splitting contexts completely is a larger architectural change.
-  // However, we structure it so hooks are clean.
   const value = {
     presets,
     updatePresets,
@@ -202,7 +208,7 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateQuickTreatments,
     ...settings,
     ...uiState,
-    ...bedManager,
+    ...bedManager, // Spread bedManager to provide beds and other actions
     movePatient,
     updateVisitWithBedSync
   };
