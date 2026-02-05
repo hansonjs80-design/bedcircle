@@ -161,9 +161,9 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                     {/* Status Icons */}
                     {visit && <PatientStatusIcons visit={visit} />}
 
-                    {/* Text Content */}
+                    {/* Text Content - xl:text-[11px] font-bold */}
                     <div className="flex-1 min-w-0 flex justify-center">
-                         <span className={`text-xs sm:text-sm font-medium truncate pointer-events-none text-center w-full ${!value ? 'text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>
+                         <span className={`text-xs sm:text-sm xl:text-[11px] font-bold truncate pointer-events-none text-center w-full ${!value ? 'text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>
                              {value || placeholder}
                          </span>
                     </div>

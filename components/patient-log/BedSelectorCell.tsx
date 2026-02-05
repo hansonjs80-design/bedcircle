@@ -157,11 +157,11 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         title="더블클릭하여 수정/배정 메뉴 열기"
         >
         {value ? (
-            <span className="text-base sm:text-lg font-black text-slate-700 dark:text-slate-200 group-hover:scale-110 transition-transform">
+            <span className="text-base sm:text-lg xl:text-[12px] font-black text-slate-700 dark:text-slate-200 group-hover:scale-110 transition-transform">
             {value}
             </span>
         ) : (
-            <span className="text-gray-300 dark:text-gray-600 text-sm font-bold">-</span>
+            <span className="text-gray-300 dark:text-gray-600 text-sm xl:text-[12px] font-bold">-</span>
         )}
         </div>
         {renderMenu()}

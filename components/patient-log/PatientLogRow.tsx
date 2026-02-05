@@ -118,23 +118,23 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           value={visit?.patient_name || ''} 
           placeholder={isDraft ? "새 환자" : "이름"}
           menuTitle="이름 수정 옵션"
-          className={`text-sm sm:text-base bg-transparent justify-center text-center ${
+          className={`bg-transparent justify-center text-center ${
             !visit?.patient_name 
               ? 'font-normal text-gray-300 dark:text-gray-600' 
               : 'font-black text-gray-800 dark:text-gray-100'
-          } ${isDraft ? 'placeholder-gray-300 font-normal' : ''}`}
+          } ${isDraft ? 'placeholder-gray-300 font-normal' : ''} text-sm sm:text-base xl:text-[11px]`}
           onCommit={(val, skipSync) => handleChange('patient_name', val || '', skipSync)}
           directEdit={isNoBedAssigned}
         />
       </td>
 
-      {/* 3. Body Part */}
+      {/* 3. Body Part - Added font-bold and 11px */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.body_part || ''} 
           placeholder={isDraft ? "부위" : ""}
           menuTitle="치료 부위 수정"
-          className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-bold bg-transparent justify-center text-center"
+          className="text-gray-600 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('body_part', val || '', skipSync)}
           directEdit={isNoBedAssigned}
         />
@@ -153,25 +153,25 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 5. Memo */}
+      {/* 5. Memo - Added font-bold and 11px */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.memo || ''} 
           placeholder=""
           menuTitle="메모 수정 옵션"
-          className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm bg-transparent justify-center text-center"
+          className="text-gray-500 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('memo', val || '', skipSync)}
           directEdit={isNoBedAssigned}
         />
       </td>
 
-      {/* 6. Author */}
+      {/* 6. Author - Added font-bold and 11px */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.author || ''} 
           placeholder="-"
           menuTitle="작성자 수정"
-          className="text-center justify-center text-xs sm:text-sm text-gray-500 bg-transparent font-medium"
+          className="text-center justify-center text-gray-500 font-bold bg-transparent text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('author', val || '', skipSync)}
           directEdit={isNoBedAssigned}
         />
