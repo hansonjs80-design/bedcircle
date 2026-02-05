@@ -20,14 +20,18 @@ interface BedHeaderProps {
 export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onEditClick, onTogglePause, onUpdateDuration }: BedHeaderProps) => {
   const { setMovingPatientState } = useTreatmentContext();
   
-  const isOvertime = bed.status === BedStatus.ACTIVE && !!currentStep?.enableTimer && bed.remainingTime <= 0;
+  const isTimerActive = bed.status === BedStatus.ACTIVE && !!currentStep?.enableTimer;
+  const isOvertime = isTimerActive && bed.remainingTime <= 0;
+  // 1분 미만 (0초 초과, 60초 미만) 조건 추가
+  const isNearEnd = isTimerActive && bed.remainingTime > 0 && bed.remainingTime < 60;
+  
   const isBedT = bed.id === 11;
   
   const handleTimerDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (bed.status !== BedStatus.ACTIVE || !currentStep?.enableTimer || !onUpdateDuration) return;
+    if (!isTimerActive || !onUpdateDuration) return;
 
     const currentMinutes = Math.ceil(Math.max(0, bed.remainingTime) / 60);
     const newMinutesStr = prompt("타이머 시간 수정 (분):", currentMinutes.toString());
@@ -77,17 +81,22 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
       </div>
 
       <div className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
-        {bed.status === BedStatus.ACTIVE && currentStep?.enableTimer && (
+        {isTimerActive && (
           <>
              {/* Timer Display: 
                  - Portrait: Shifted 5px left (-translate-x-[5px]) 
                  - Landscape: Shifted 10px left (-translate-x-[10px]), Text Increased (text-3xl)
-                 - Color changed to gray-500 for normal state (Requested Update)
+                 - Color changed based on time remaining:
+                   1. Overtime (<= 0): Red + Pulse
+                   2. Near End (< 60s): Light Red (text-red-400)
+                   3. Normal: Gray
              */}
              <div 
                onDoubleClick={handleTimerDoubleClick}
                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[5px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
-                 isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'
+                 isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : 
+                 isNearEnd ? 'text-red-400 dark:text-red-300' :
+                 'text-gray-500 dark:text-gray-400'
                } ${bed.isPaused ? 'opacity-40 grayscale-[0.5]' : ''}`}
                title="더블클릭하여 시간 수정"
              >
@@ -128,7 +137,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
         <div className="flex items-center gap-0.5 sm:gap-2 lg:landscape:ml-[20px]">
           {/* Settings Button: 
               - Portrait: Shifted 5px right (translate-x-[5px])
-              - Landscape: Shifted 8px right (translate-x-[8px]) - Unchanged from previous request
+              - Landscape: Shifted 8px right (translate-x-[8px])
           */}
           <button 
              onClick={(e) => { e.stopPropagation(); onEditClick?.(bed.id); }}
@@ -147,3 +156,4 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
     </div>
   );
 });
+    
