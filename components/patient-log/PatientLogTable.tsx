@@ -22,6 +22,9 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = ({
   onSelectLog,
   onMovePatient
 }) => {
+  // 항상 10개의 빈 행을 유지하여 연속 입력 편의성 제공
+  const EMPTY_ROWS_COUNT = 10;
+
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
       <table className="w-full border-collapse table-fixed">
@@ -40,12 +43,15 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = ({
             />
           ))}
           
-          {/* Always render one phantom/draft row at the bottom */}
-          <PatientLogRow 
-            isDraft={true}
-            onCreate={onCreate}
-            onSelectLog={onSelectLog}
-          />
+          {/* Always render multiple phantom/draft rows at the bottom */}
+          {Array.from({ length: EMPTY_ROWS_COUNT }).map((_, index) => (
+            <PatientLogRow 
+              key={`draft-${index}`}
+              isDraft={true}
+              onCreate={onCreate}
+              onSelectLog={onSelectLog}
+            />
+          ))}
         </tbody>
       </table>
     </div>

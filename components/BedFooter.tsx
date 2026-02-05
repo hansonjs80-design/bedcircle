@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import { SkipForward, SkipBack, CheckCircle } from 'lucide-react';
 import { BedState, BedStatus, TreatmentStep } from '../types';
@@ -12,7 +11,26 @@ interface BedFooterProps {
 }
 
 export const BedFooter = memo(({ bed, steps, onNext, onPrev, onClear }: BedFooterProps) => {
-  const isLastStep = bed.currentStepIndex === (steps.length || 0) - 1;
+  const totalSteps = steps.length || 0;
+  // Last Step: Button is "Complete Treatment"
+  const isLastStep = bed.currentStepIndex === totalSteps - 1;
+  // Pre-Last Step: Button is "Next Step", but clicking it reveals "Complete Treatment"
+  const isPreLastStep = bed.currentStepIndex === totalSteps - 2;
+
+  // Determine button styling based on state
+  let nextButtonClass = "";
+  
+  if (isLastStep) {
+    // Case 3: Complete Button -> Red BG, White Text
+    nextButtonClass = "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 shadow-inner";
+  } else if (isPreLastStep) {
+    // Case 2: Pre-Complete (Next click leads to Complete) -> Blue BG, White Text
+    nextButtonClass = "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 shadow-sm";
+  } else {
+    // Case 1: Intermediate (Next click leads to another Next Step) -> White BG, Blue Text
+    // Removed border as requested
+    nextButtonClass = "bg-white text-blue-600 hover:bg-blue-50 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 shadow-sm";
+  }
 
   return (
     <div className="border-t border-black/10 shrink-0">
@@ -36,11 +54,7 @@ export const BedFooter = memo(({ bed, steps, onNext, onPrev, onClear }: BedFoote
          
          <button 
            onClick={() => onNext(bed.id)}
-           className={`flex-1 py-1.5 sm:py-3 landscape:py-[2px] lg:landscape:py-2 font-black text-[10px] sm:text-sm landscape:text-[8px] lg:landscape:text-xs flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap ${
-             isLastStep 
-               ? 'bg-slate-800 text-white hover:bg-slate-900' 
-               : 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800'
-           }`}
+           className={`flex-1 py-1.5 sm:py-3 landscape:py-[2px] lg:landscape:py-2 font-black text-[10px] sm:text-sm landscape:text-[8px] lg:landscape:text-xs flex items-center justify-center gap-1.5 transition-all whitespace-nowrap active:scale-95 ${nextButtonClass}`}
          >
            {isLastStep ? (
              <>
@@ -57,7 +71,6 @@ export const BedFooter = memo(({ bed, steps, onNext, onPrev, onClear }: BedFoote
     </div>
   );
 }, (prevProps, nextProps) => {
-  // CRITICAL OPTIMIZATION: Ignore timer ticks (remainingTime)
   const pBed = prevProps.bed;
   const nBed = nextProps.bed;
 

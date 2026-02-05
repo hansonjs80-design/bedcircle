@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import { TreatmentStep, BedStatus } from '../types';
 import { getAbbreviation } from '../utils/bedUtils';
@@ -31,7 +30,7 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
 }) => {
   const colorClass = getStepColor(step, isActive, isPast, false, isCompleted);
 
-  const handleMemoClick = (e: React.MouseEvent) => {
+  const handleMemoDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!onUpdateMemo) return;
@@ -79,8 +78,7 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
       {/* Bottom Half: Memo Field - Height increased from 15px to 17px (+10%) */}
       <div 
         className="w-full h-[17px] sm:h-8 landscape:h-[16px] sm:landscape:h-[20px] lg:landscape:h-10 shrink-0 bg-gray-50 dark:bg-slate-800/90 border-t border-gray-200 dark:border-slate-700 flex items-center justify-center px-0.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group touch-manipulation select-none overflow-hidden"
-        onClick={handleMemoClick}
-        onDoubleClick={(e) => e.stopPropagation()}
+        onDoubleClick={handleMemoDoubleClick}
       >
          {memo ? (
            <span className="text-[9px] sm:text-xs landscape:text-[10px] sm:landscape:text-[11px] lg:landscape:text-sm leading-none text-center font-bold text-gray-800 dark:text-gray-200 break-words line-clamp-2 w-full pointer-events-none px-0.5">

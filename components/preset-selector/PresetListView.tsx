@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Play, ArrowUpDown, Filter } from 'lucide-react';
 import { Preset } from '../../types';
@@ -11,7 +10,8 @@ interface PresetListViewProps {
 
 export const PresetListView: React.FC<PresetListViewProps> = ({ presets, onSelect }) => {
   const [filterStep, setFilterStep] = useState<'all' | number>('all');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  // 기본 정렬을 'none'으로 설정하여 설정 탭의 순서(Rank)를 그대로 따르도록 함
+  const [sortDir, setSortDir] = useState<'none' | 'asc' | 'desc'>('none');
 
   const processedPresets = useMemo(() => {
     let result = [...presets];
@@ -20,15 +20,22 @@ export const PresetListView: React.FC<PresetListViewProps> = ({ presets, onSelec
       result = result.filter(p => p.steps.length === filterStep);
     }
 
-    result.sort((a, b) => {
-      const diff = a.steps.length - b.steps.length;
-      return sortDir === 'asc' ? diff : -diff;
-    });
+    // 정렬이 활성화된 경우에만 단계 수 기준으로 정렬
+    if (sortDir !== 'none') {
+      result.sort((a, b) => {
+        const diff = a.steps.length - b.steps.length;
+        return sortDir === 'asc' ? diff : -diff;
+      });
+    }
 
     return result;
   }, [presets, filterStep, sortDir]);
 
-  const toggleSort = () => setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+  const toggleSort = () => setSortDir(prev => {
+    if (prev === 'none') return 'desc';
+    if (prev === 'desc') return 'asc';
+    return 'none';
+  });
 
   return (
     <div className="space-y-2">
@@ -62,19 +69,21 @@ export const PresetListView: React.FC<PresetListViewProps> = ({ presets, onSelec
 
           <button 
             onClick={toggleSort}
-            className={`p-1 rounded-lg transition-colors ${sortDir === 'desc' ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-700'}`}
+            title={sortDir === 'none' ? "단계 수 정렬" : (sortDir === 'desc' ? "단계 많은 순" : "단계 적은 순")}
+            className={`p-1 rounded-lg transition-colors flex items-center gap-1 ${sortDir !== 'none' ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-700'}`}
           >
             <ArrowUpDown className="w-3 h-3" />
+            {sortDir !== 'none' && <span className="text-[9px] font-bold">{sortDir === 'desc' ? '▼' : '▲'}</span>}
           </button>
         </div>
       </div>
 
       {/* 
         Container Height Update:
-        - Mobile: max-h-[290px] (Increased by ~10% from 260px)
-        - Tablet/Desktop (sm+): max-h-[260px] (Maintained)
+        - Mobile: max-h-[290px]
+        - Tablet/Desktop (sm+): max-h-[360px] (Increased from 260px to fill larger modal)
       */}
-      <div className="grid gap-1 max-h-[290px] sm:max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+      <div className="grid gap-1 max-h-[290px] sm:max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
         {processedPresets.length === 0 ? (
            <div className="text-center py-6 text-gray-400 border border-dashed border-gray-200 dark:border-slate-700 rounded-xl">
              <span className="text-xs">조건에 맞는 처방이 없습니다.</span>

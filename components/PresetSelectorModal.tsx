@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import { X, Play, ChevronLeft, Eraser } from 'lucide-react';
 import { Preset, TreatmentStep, QuickTreatment } from '../types';
@@ -106,7 +105,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
       onClick={onClose}
     >
       <div 
-        className="w-full sm:w-[520px] max-h-[90vh] sm:max-h-[85vh] bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full sm:w-[520px] max-h-[90vh] sm:max-h-[95vh] bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50 shrink-0">
@@ -119,7 +118,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
                 <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
             )}
-            <div>
+            <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
               <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide">
                 {previewPreset ? '치료 구성 확인' : (isTractionBed ? '견인 치료 설정' : (isLogMode ? '처방 수정' : '설정 및 시작'))}
               </span>

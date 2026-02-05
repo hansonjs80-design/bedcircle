@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { X, Database, List, Settings as SettingsIcon, Sliders } from 'lucide-react';
+import React, { useState, Suspense } from 'react';
+import { X, Database, List, Settings as SettingsIcon, Sliders, Loader2 } from 'lucide-react';
 import { Preset } from '../types';
-import { SettingsDatabaseTab } from './SettingsDatabaseTab';
-import { SettingsPresetTab } from './SettingsPresetTab';
-import { SettingsPreferencesTab } from './SettingsPreferencesTab';
+
+// Lazy load tabs to reduce initial bundle size
+const SettingsDatabaseTab = React.lazy(() => import('./SettingsDatabaseTab').then(m => ({ default: m.SettingsDatabaseTab })));
+const SettingsPresetTab = React.lazy(() => import('./SettingsPresetTab').then(m => ({ default: m.SettingsPresetTab })));
+const SettingsPreferencesTab = React.lazy(() => import('./SettingsPreferencesTab').then(m => ({ default: m.SettingsPreferencesTab })));
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -23,7 +25,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'connection' | 'presets' | 'preferences'>('connection');
   
   return (
-    <div className={`fixed inset-y-0 left-0 w-full sm:w-96 bg-white dark:bg-slate-800 shadow-2xl transform transition-transform duration-300 z-[60] ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div className={`fixed inset-y-0 left-0 w-full sm:w-[600px] bg-white dark:bg-slate-800 shadow-2xl transform transition-transform duration-300 z-[60] ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="h-full flex flex-col">
         {/* Header: Added safe-area padding to prevent status bar overlap */}
         <div className="bg-brand-600 text-white shrink-0 pt-[env(safe-area-inset-top)]">
@@ -80,23 +82,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/30 dark:bg-slate-900/30">
-          {activeTab === 'connection' && (
-            <SettingsDatabaseTab 
-              onResetAllBeds={onResetAllBeds} 
-              onClosePanel={onClose} 
-            />
-          )}
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-40">
+              <Loader2 className="w-8 h-8 text-brand-500/50 animate-spin" />
+            </div>
+          }>
+            {activeTab === 'connection' && (
+              <SettingsDatabaseTab 
+                onResetAllBeds={onResetAllBeds} 
+                onClosePanel={onClose} 
+              />
+            )}
 
-          {activeTab === 'presets' && (
-            <SettingsPresetTab 
-              presets={presets} 
-              onUpdatePresets={onUpdatePresets} 
-            />
-          )}
+            {activeTab === 'presets' && (
+              <SettingsPresetTab 
+                presets={presets} 
+                onUpdatePresets={onUpdatePresets} 
+              />
+            )}
 
-          {activeTab === 'preferences' && (
-            <SettingsPreferencesTab />
-          )}
+            {activeTab === 'preferences' && (
+              <SettingsPreferencesTab />
+            )}
+          </Suspense>
         </div>
         
         {/* Footer: Added safe-area padding for bottom */}

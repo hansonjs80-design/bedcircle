@@ -18,6 +18,14 @@ export const PatientLogHeader: React.FC<PatientLogHeaderProps> = ({
   onPrint,
   onClose
 }) => {
+  const handleTodayClick = () => {
+    // 로컬 시간대 기준 오늘 날짜 계산 (UTC 보정)
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    const localDate = new Date(now.getTime() - offset).toISOString().split('T')[0];
+    onDateSelect(localDate);
+  };
+
   return (
     // 상단 패딩을 넉넉하게 조정 (safe-area + 1.5rem ~ 24px)
     <div className="shrink-0 px-4 pb-4 pt-[calc(1.5rem+env(safe-area-inset-top))] border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 flex flex-row items-center justify-between gap-2 touch-none">
@@ -53,7 +61,7 @@ export const PatientLogHeader: React.FC<PatientLogHeaderProps> = ({
             type="date" 
             value={currentDate}
             onChange={(e) => onDateSelect(e.target.value)}
-            className="bg-transparent font-bold text-gray-700 dark:text-gray-200 outline-none text-center cursor-pointer text-xs sm:text-sm w-[75px] xs:w-[85px]"
+            className="bg-transparent font-bold text-gray-700 dark:text-gray-200 outline-none text-center cursor-pointer text-xs sm:text-sm w-[75px] xs:w-[85px] landscape:w-[110px] md:w-[110px]"
           />
           
           <button 
@@ -66,7 +74,7 @@ export const PatientLogHeader: React.FC<PatientLogHeaderProps> = ({
           <div className="w-px h-4 bg-gray-200 dark:bg-slate-700 mx-1 hidden xs:block"></div>
 
           <button 
-            onClick={() => onDateSelect(new Date().toISOString().split('T')[0])}
+            onClick={handleTodayClick}
             className="hidden xs:block p-1.5 hover:bg-brand-50 dark:hover:bg-slate-700 rounded-md transition-colors group"
             title="오늘 날짜로 이동"
           >

@@ -23,8 +23,9 @@ export const LandscapeEmptyCell: React.FC = memo(() => {
   return (
     <div 
       className="
+        w-full h-full
         rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-800 bg-gray-100/30 dark:bg-slate-900/30 
-        min-h-[110px] lg:min-h-[240px]
+        min-h-[110px] lg:min-h-[216px]
         flex items-center justify-center
         invisible md:visible
       "

@@ -1,4 +1,3 @@
-
 import { Preset, TreatmentStep, QuickTreatment } from './types';
 
 export const TOTAL_BEDS = 11;
@@ -20,7 +19,7 @@ export const STANDARD_TREATMENTS: QuickTreatment[] = [
   { id: 'qt-5', name: '자기장 (Magnetic)', label: 'Mg', duration: 10, color: 'bg-purple-500', enableTimer: true },
   { id: 'qt-6', name: '적외선 (IR)', label: 'IR', duration: 10, color: 'bg-red-500', enableTimer: true },
   { id: 'qt-7', name: '견인 (Traction)', label: '견인', duration: 15, color: 'bg-orange-500', enableTimer: true },
-  { id: 'qt-8', name: '충격파 (ESWT)', label: 'ESWT', duration: 10, color: 'bg-blue-500', enableTimer: true },
+  { id: 'qt-8', name: '충격파 (ESWT)', label: 'ES', duration: 10, color: 'bg-blue-500', enableTimer: true },
   { id: 'qt-9', name: '이온치료 (ION)', label: 'ION', duration: 10, color: 'bg-cyan-500', enableTimer: true },
   { id: 'qt-10', name: '공기압 (Air)', label: 'Air', duration: 15, color: 'bg-gray-500', enableTimer: true },
   { id: 'qt-11', name: '냉치료 (Cryo)', label: 'Cryo', duration: 5, color: 'bg-sky-500', enableTimer: true },

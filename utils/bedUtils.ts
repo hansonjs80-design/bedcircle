@@ -1,4 +1,3 @@
-
 import { BedState, BedStatus, Preset, TreatmentStep, QuickTreatment } from '../types';
 import { STANDARD_TREATMENTS } from '../constants';
 
@@ -20,7 +19,7 @@ export const getAbbreviation = (name: string): string => {
   if (upper.includes('IR') || upper.includes('적외선')) return 'IR';
   if (upper.includes('TENS')) return 'TENS';
   if (upper.includes('LASER') || upper.includes('레이저')) return 'La';
-  if (upper.includes('SHOCKWAVE') || upper.includes('충격파')) return 'ESWT';
+  if (upper.includes('SHOCKWAVE') || upper.includes('충격파')) return 'ES';
   if (upper.includes('EXERCISE') || upper.includes('운동')) return '운동';
   if (upper.includes('ION') || upper.includes('이온')) return 'ION';
   if (upper.includes('COLD') || upper.includes('콜드') || upper.includes('ICE')) return 'Ice';

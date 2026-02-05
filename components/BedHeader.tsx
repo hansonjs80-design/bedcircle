@@ -82,11 +82,12 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
              {/* Timer Display: 
                  - Portrait: Shifted 5px left (-translate-x-[5px]) 
                  - Landscape: Shifted 10px left (-translate-x-[10px]), Text Increased (text-3xl)
+                 - Color changed to gray-500 for normal state (Requested Update)
              */}
              <div 
                onDoubleClick={handleTimerDoubleClick}
                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[5px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
-                 isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : isBedT ? 'text-blue-900 dark:text-blue-100' : 'text-slate-800 dark:text-slate-200'
+                 isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'
                } ${bed.isPaused ? 'opacity-40 grayscale-[0.5]' : ''}`}
                title="더블클릭하여 시간 수정"
              >
@@ -116,7 +117,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
           </>
         )}
          {bed.status === BedStatus.COMPLETED && (
-          <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold text-xs sm:text-base landscape:text-[11px] sm:landscape:text-[10px] lg:landscape:text-xs bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <div className="flex items-center gap-1 text-white font-bold text-xs sm:text-base landscape:text-[11px] sm:landscape:text-[10px] lg:landscape:text-xs bg-red-600 dark:bg-red-600 px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm">
              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
              <span>완료</span>
           </div>
