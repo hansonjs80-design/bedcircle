@@ -55,7 +55,7 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
         className={`
           flex-1 flex flex-col h-full min-w-0 group/col relative transition-all duration-200
           ${isSelectedForSwap 
-            ? 'z-20 scale-95 ring-4 ring-indigo-500 dark:ring-indigo-400 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.5)] bg-indigo-50 dark:bg-indigo-900/20 overflow-hidden' 
+            ? 'z-20 scale-95 ring-2 ring-indigo-500 dark:ring-indigo-400 rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.5)] bg-indigo-50 dark:bg-indigo-900/20 overflow-hidden' 
             : ''
           }
         `}
@@ -80,10 +80,12 @@ export const BedStepColumn: React.FC<BedStepColumnProps> = memo(({
             
             {isActive && <div className="absolute bottom-0 w-full h-1 bg-white/50 animate-pulse" />}
             
-            {/* Explicit Swap Indicator Overlay */}
+            {/* Explicit Swap Indicator Overlay - Positioned Bottom Center with High Visibility */}
             {isSelectedForSwap && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] animate-pulse">
-                 <ArrowRightLeft className="w-5 h-5 landscape:w-4 landscape:h-4 lg:landscape:w-6 lg:landscape:h-6 text-white drop-shadow-md" />
+              <div className="absolute inset-0 flex items-end justify-center pb-1">
+                 <div className="bg-indigo-600 text-white p-1 rounded-full shadow-lg border border-white/50 animate-bounce">
+                    <ArrowRightLeft className="w-3.5 h-3.5 landscape:w-3 landscape:h-3 lg:landscape:w-5 lg:landscape:h-5" />
+                 </div>
               </div>
             )}
         </div>

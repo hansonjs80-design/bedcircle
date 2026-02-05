@@ -28,9 +28,9 @@ export const MainLayout: React.FC = () => {
   }, [isDarkMode]);
 
   // Dynamic class generation for main content area to handle Full Screen transitions
-  // Added +8px to top padding in full screen mode as requested
+  // Added extra padding for Desktop/Tablet (md+) in full screen mode to push content down ~10px (16px -> 26px)
   const mainContentPadding = isFullScreen 
-    ? 'pt-[calc(env(safe-area-inset-top)+8px)]' 
+    ? 'pt-[calc(env(safe-area-inset-top)+8px)] md:pt-[26px]' 
     : `
       pt-[calc(3.5rem+env(safe-area-inset-top)+1rem)] 
       landscape:pt-[calc(2.5rem+env(safe-area-inset-top))]
