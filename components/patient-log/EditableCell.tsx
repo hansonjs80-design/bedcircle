@@ -11,6 +11,7 @@ interface EditableCellProps {
   className?: string;
   menuTitle?: string;
   directEdit?: boolean;
+  syncOnDirectEdit?: boolean; // New prop to control sync behavior on direct edit
 }
 
 export const EditableCell: React.FC<EditableCellProps> = ({ 
@@ -20,7 +21,8 @@ export const EditableCell: React.FC<EditableCellProps> = ({
   placeholder, 
   className,
   menuTitle = '수정 옵션',
-  directEdit = false
+  directEdit = false,
+  syncOnDirectEdit = true // Default to syncing (updating bed display) unless specified otherwise
 }) => {
   const [mode, setMode] = useState<'view' | 'menu' | 'edit'>('view');
   const [skipSync, setSkipSync] = useState(false);
@@ -44,7 +46,9 @@ export const EditableCell: React.FC<EditableCellProps> = ({
     e.preventDefault();
 
     if (directEdit) {
-      setSkipSync(true);
+      // If directEdit is true, we skip the menu.
+      // syncOnDirectEdit determines if we update the Bed Card (false for skipSync) or Log Only (true for skipSync)
+      setSkipSync(!syncOnDirectEdit); 
       setMode('edit');
       return;
     }
@@ -99,7 +103,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
       <div 
         onDoubleClick={handleDoubleClick}
         className={`w-full h-full px-2 py-1 flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors text-sm truncate ${!value ? 'text-gray-300 italic' : ''} ${className}`}
-        title={directEdit ? "더블클릭하여 수정" : "더블클릭하여 수정 옵션 열기"}
+        title={directEdit ? "더블클릭하여 바로 수정" : "더블클릭하여 수정 옵션 열기"}
       >
         {value || placeholder}
       </div>

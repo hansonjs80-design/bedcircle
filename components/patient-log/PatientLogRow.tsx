@@ -95,7 +95,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
 
   return (
     <tr className={rowClasses}>
-      {/* 1. Bed ID */}
+      {/* 1. Bed ID - Keeps original logic (Not direct edit) */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0 relative">
         <BedSelectorCell 
           value={visit?.bed_id || null}
@@ -112,7 +112,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         )}
       </td>
 
-      {/* 2. Patient Name */}
+      {/* 2. Patient Name - Direct Edit Allowed */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.patient_name || ''} 
@@ -124,11 +124,12 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
               : 'font-black text-gray-800 dark:text-gray-100'
           } ${isDraft ? 'placeholder-gray-300 font-normal' : ''} text-sm sm:text-base xl:text-[11px]`}
           onCommit={(val, skipSync) => handleChange('patient_name', val || '', skipSync)}
-          directEdit={isNoBedAssigned}
+          directEdit={true}
+          syncOnDirectEdit={true}
         />
       </td>
 
-      {/* 3. Body Part */}
+      {/* 3. Body Part - Direct Edit Allowed */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.body_part || ''} 
@@ -136,11 +137,12 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           menuTitle="치료 부위 수정"
           className="text-gray-600 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('body_part', val || '', skipSync)}
-          directEdit={isNoBedAssigned}
+          directEdit={true}
+          syncOnDirectEdit={true}
         />
       </td>
 
-      {/* 4. Treatment - Selector Cell */}
+      {/* 4. Treatment - Selector Cell (Complex Logic Retained) */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0 relative">
         <TreatmentSelectorCell
           visit={visit}
@@ -153,14 +155,14 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 5. NEW Status Column */}
+      {/* 5. Status Column (Icons) */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <div className="w-full h-full flex items-center justify-center">
             {visit && <PatientStatusIcons visit={visit} />}
         </div>
       </td>
 
-      {/* 6. Memo */}
+      {/* 6. Memo - Direct Edit Allowed */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.memo || ''} 
@@ -168,11 +170,12 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           menuTitle="메모 수정 옵션"
           className="text-gray-500 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('memo', val || '', skipSync)}
-          directEdit={isNoBedAssigned}
+          directEdit={true}
+          syncOnDirectEdit={true}
         />
       </td>
 
-      {/* 7. Author */}
+      {/* 7. Author - Direct Edit Allowed */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.author || ''} 
@@ -180,7 +183,8 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           menuTitle="작성자 수정"
           className="text-center justify-center text-gray-500 font-bold bg-transparent text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('author', val || '', skipSync)}
-          directEdit={isNoBedAssigned}
+          directEdit={true}
+          syncOnDirectEdit={true}
         />
       </td>
 
