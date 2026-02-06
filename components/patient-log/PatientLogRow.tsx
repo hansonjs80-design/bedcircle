@@ -146,7 +146,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 4. Treatment - Selector Cell (Complex Logic Retained) */}
+      {/* 4. Treatment - Selector Cell */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0 relative">
         <TreatmentSelectorCell
           visit={visit}
@@ -155,7 +155,8 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           rowStatus={rowStatus}
           onCommitText={handleTreatmentTextCommit}
           onOpenSelector={handleTreatmentSelectorOpen}
-          directSelector={isNoBedAssigned}
+          // Direct Selector opens if: 1. No bed assigned (existing logic) OR 2. Bed is assigned but treatment is empty
+          directSelector={isNoBedAssigned || (!hasTreatment && !!visit?.bed_id)}
         />
       </td>
 

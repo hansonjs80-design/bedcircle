@@ -130,14 +130,28 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       let shouldForceRestart = false;
 
-      // Conflict Check
+      // Conflict Check 1: Bed Assignment Change
       const targetBedId = updates.bed_id !== undefined ? updates.bed_id : oldVisit.bed_id;
       
       if (!skipBedSync && targetBedId) {
+         // Case A: Moving/Assigning Bed
          const isBedAssignmentChange = updates.bed_id !== undefined && updates.bed_id !== oldVisit.bed_id;
          
          if (isBedAssignmentChange) {
              const targetBed = bedsRef.current.find(b => b.id === targetBedId);
+             if (targetBed && targetBed.status === BedStatus.ACTIVE) {
+                 if (!window.confirm(`${targetBedId}번 배드는 비어있지 않습니다.\n배드카드를 비우고 입력할까요?`)) {
+                     return;
+                 }
+                 shouldForceRestart = true;
+             }
+         }
+         
+         // Case B: Updating Treatment on Same Bed (New Logic)
+         // Only trigger if treatment_name is part of the update and changes
+         if (updates.treatment_name !== undefined && updates.treatment_name !== oldVisit.treatment_name) {
+             const targetBed = bedsRef.current.find(b => b.id === targetBedId);
+             // If target bed is ACTIVE and we are changing the treatment via the modal (skipBedSync is false)
              if (targetBed && targetBed.status === BedStatus.ACTIVE) {
                  if (!window.confirm(`${targetBedId}번 배드는 비어있지 않습니다.\n배드카드를 비우고 입력할까요?`)) {
                      return;
