@@ -1,7 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit3, List, Activity, CheckCircle } from 'lucide-react';
-import { PatientStatusIcons } from './PatientStatusIcons';
 import { PatientVisit } from '../../types';
 import { ContextMenu } from '../common/ContextMenu';
 
@@ -82,11 +81,9 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                 />
             ) : (
                 <div 
-                    className="flex items-center w-full h-full cursor-pointer px-2 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
+                    className="flex items-center w-full h-full cursor-pointer px-1 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
                     title={directSelector ? "더블클릭하여 처방 선택" : "더블클릭하여 수정 옵션 열기"}
                 >
-                    {visit && <PatientStatusIcons visit={visit} />}
-
                     <div className="flex-1 min-w-0 flex justify-center">
                          <span className={`text-xs sm:text-sm xl:text-[11px] font-bold truncate pointer-events-none text-center w-full ${!value ? 'text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>
                              {value || placeholder}
@@ -94,12 +91,12 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                     </div>
                     
                     {rowStatus === 'completed' && (
-                        <div className="absolute right-2 text-gray-400 pointer-events-none">
+                        <div className="absolute right-1 text-gray-400 pointer-events-none">
                         <CheckCircle className="w-3.5 h-3.5" />
                         </div>
                     )}
                     {rowStatus === 'active' && (
-                        <div className="absolute right-2 text-brand-500 animate-pulse pointer-events-none">
+                        <div className="absolute right-1 text-brand-500 animate-pulse pointer-events-none">
                         <Activity className="w-3.5 h-3.5" />
                         </div>
                     )}

@@ -1,8 +1,10 @@
+
 import React, { memo } from 'react';
 import { Trash2 } from 'lucide-react';
 import { EditableCell } from './EditableCell';
 import { BedSelectorCell } from './BedSelectorCell';
 import { TreatmentSelectorCell } from './TreatmentSelectorCell'; 
+import { PatientStatusIcons } from './PatientStatusIcons';
 import { PatientVisit } from '../../types';
 
 interface PatientLogRowProps {
@@ -89,8 +91,6 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
       rowClasses += ' opacity-80';
   }
 
-  // Check if bedId is missing (Draft or Log-only entry)
-  // If missing, we enable direct edit mode (skipping menus)
   const isNoBedAssigned = !visit?.bed_id;
 
   return (
@@ -128,7 +128,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 3. Body Part - Added font-bold and 11px */}
+      {/* 3. Body Part */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.body_part || ''} 
@@ -153,7 +153,14 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 5. Memo - Added font-bold and 11px */}
+      {/* 5. NEW Status Column */}
+      <td className="border-r border-gray-100 dark:border-slate-800 p-0">
+        <div className="w-full h-full flex items-center justify-center">
+            {visit && <PatientStatusIcons visit={visit} />}
+        </div>
+      </td>
+
+      {/* 6. Memo */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.memo || ''} 
@@ -165,7 +172,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 6. Author - Added font-bold and 11px */}
+      {/* 7. Author */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.author || ''} 
@@ -177,7 +184,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
       </td>
 
-      {/* 7. Delete Action */}
+      {/* 8. Delete Action */}
       <td className="p-0 text-center">
         {!isDraft && visit && onDelete && (
           <div className="flex justify-center items-center h-full">

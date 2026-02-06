@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { PatientVisit } from '../../types';
+import { PatientStatusIcons } from './PatientStatusIcons';
 
 interface PatientLogPrintViewProps {
   visits: PatientVisit[];
@@ -17,9 +19,7 @@ export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({
   return (
     <div id={id} className={`${className} bg-white text-black p-8 sm:p-12`}>
       {/* Header: Flexbox for Left Title / Right Info */}
-      {/* Increased pb-4 to pb-6 to ensure text stays well above the border line */}
       <div className="flex justify-between items-end mb-4 pb-6 border-b-2 border-black">
-         {/* Reduced font size (text-2xl -> text-xl) */}
          <h1 className="text-xl sm:text-2xl font-black text-black leading-snug tracking-tight">환자 현황</h1>
          <div className="flex items-center gap-3 text-sm font-bold text-gray-600 mb-1.5">
             <span className="text-gray-500">{currentDate}</span>
@@ -36,20 +36,20 @@ export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({
            <div 
              key={visit.id} 
              // Darkened border from gray-400 to gray-600 (approx 50% darker)
-             className="break-inside-avoid page-break-inside-avoid border-b border-gray-600 py-2 flex items-center gap-4 sm:gap-6"
+             className="break-inside-avoid page-break-inside-avoid border-b border-gray-600 py-2 flex items-center gap-2 sm:gap-4"
            >
               {/* No. (Room Number) - Updated to 12px font-black */}
-              <div className="w-10 sm:w-12 shrink-0 font-black text-gray-900 text-center text-[12px]">
+              <div className="w-8 sm:w-12 shrink-0 font-black text-gray-900 text-center text-[12px]">
                  {visit.bed_id || (index + 1)}
               </div>
               
               {/* Name - Updated to 11px font-black */}
-              <div className="w-20 sm:w-24 shrink-0 font-black text-[11px] text-gray-900 whitespace-nowrap overflow-visible px-1">
+              <div className="w-16 sm:w-20 shrink-0 font-black text-[11px] text-gray-900 whitespace-nowrap overflow-visible px-1">
                  {visit.patient_name || "-"}
               </div>
               
               {/* Body Part - Updated to 11px font-bold */}
-              <div className="w-20 sm:w-24 shrink-0 font-bold text-[11px] text-gray-600 text-center whitespace-nowrap overflow-visible px-1">
+              <div className="w-16 sm:w-20 shrink-0 font-bold text-[11px] text-gray-600 text-center whitespace-nowrap overflow-visible px-1">
                  {visit.body_part || "-"}
               </div>
               
@@ -57,9 +57,14 @@ export const PatientLogPrintView: React.FC<PatientLogPrintViewProps> = ({
               <div className="flex-1 text-gray-800 font-bold text-[11px] whitespace-nowrap overflow-visible px-1">
                  {visit.treatment_name || "-"}
               </div>
+
+              {/* Status Icons Column - New for Print View */}
+              <div className="w-10 sm:w-14 shrink-0 flex items-center justify-center">
+                 <PatientStatusIcons visit={visit} />
+              </div>
               
               {/* Memo - Updated to 11px font-bold */}
-              <div className="w-32 sm:w-40 shrink-0 font-bold text-[11px] text-gray-500 text-right whitespace-nowrap overflow-visible px-1">
+              <div className="w-24 sm:w-32 shrink-0 font-bold text-[11px] text-gray-500 text-right whitespace-nowrap overflow-visible px-1">
                  {visit.memo || ""}
               </div>
            </div>
