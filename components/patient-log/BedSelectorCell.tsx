@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Edit3, PlayCircle, Hash, ArrowRightLeft } from 'lucide-react';
+import { Edit3, PlayCircle, Hash } from 'lucide-react';
 import { ContextMenu } from '../common/ContextMenu';
+import { BedSelectionGrid } from './BedSelectionGrid';
 
 interface BedSelectorCellProps {
   value: number | null;
@@ -11,6 +12,8 @@ interface BedSelectorCellProps {
   onUpdateLogOnly?: (newBedId: number) => void; 
   rowStatus?: 'active' | 'completed' | 'none';
   hasTreatment?: boolean;
+  activeBedIds?: number[];
+  isLogEditMode?: boolean; // New prop for strict mode
 }
 
 export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({ 
@@ -20,7 +23,9 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   className,
   onUpdateLogOnly,
   rowStatus = 'none',
-  hasTreatment = true
+  hasTreatment = true,
+  activeBedIds = [],
+  isLogEditMode = false
 }) => {
   const [mode, setMode] = useState<'view' | 'menu' | 'edit_log' | 'edit_assign' | 'select_target'>('view');
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
@@ -39,19 +44,25 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
 
     setMenuPos({ x: e.clientX, y: e.clientY });
 
-    // 1. If Bed is NOT assigned (empty cell), open selection immediately
+    // --- Strict Logic for Log Edit Mode ---
+    // User Requirement: "When bed number cell is double clicked [in edit mode], make background white"
+    // Action: Open grid directly, skip menu, pass disableHighlight to grid.
+    if (isLogEditMode) {
+        setMode('select_target');
+        return;
+    }
+
+    // --- Standard Logic ---
     if (!value) {
         setMode('select_target');
         return;
     }
 
-    // 2. If Treatment is empty, open selection immediately (Quick setup logic)
     if (!hasTreatment) {
         setMode('select_target');
         return;
     }
 
-    // 3. SPECIAL LOGIC: Active Bed Double Click -> Confirm then Select
     if (rowStatus === 'active') {
         if (window.confirm("방번호를 변경하시겠습니까?")) {
             setMode('select_target');
@@ -59,14 +70,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         return;
     }
 
-    // 4. CRITICAL UPDATE: Unsynchronized (Inactive) Row with Value -> Direct Log Edit
-    // 배드와 동기화되지 않은 상태(비활성)이면서 방번호가 있는 경우, 메뉴 없이 바로 선택창 오픈
-    if (value && rowStatus !== 'active') {
-        setMode('select_target');
-        return;
-    }
-
-    // 5. Fallback Default (Should rarely be reached with above logic, but kept for safety)
+    // Fallback for other cases
     setMode('menu');
   };
 
@@ -99,55 +103,41 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
       }
   };
 
+  const handleGridSelect = (num: number) => {
+    // If we are in strict Log Edit Mode, or explicitly in edit_log mode
+    if (isLogEditMode || (mode === 'edit_log' && onUpdateLogOnly)) {
+        if (onUpdateLogOnly) onUpdateLogOnly(num);
+    } 
+    // Standard Bed Operations
+    else {
+        if (value && num !== value) {
+            onMove(num);
+        } else if (!value || value !== num) {
+            onAssign(num);
+        }
+    }
+    setMode('view');
+  };
+
   const renderContent = () => {
-    // 1. Target Selection Mode (Grid 1-10 + 11(T))
     if (mode === 'select_target') {
         return (
             <ContextMenu
-                title="배드 선택 (1~10, T)"
+                title={isLogEditMode ? "방 번호 수정 (단순 변경)" : "배드 선택 (회색: 사용중)"}
                 position={menuPos}
                 onClose={() => setMode('view')}
                 width={220}
             >
-                <div className="p-2">
-                    <div className="grid grid-cols-5 gap-1.5">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => (
-                            <button
-                                key={num}
-                                onClick={() => {
-                                    // Logic: If row is NOT active, perform simple log update only
-                                    if (rowStatus !== 'active' && onUpdateLogOnly) {
-                                        onUpdateLogOnly(num);
-                                    } 
-                                    // Logic: If row is ACTIVE or empty, perform move/assign
-                                    else {
-                                        if (value && num !== value) {
-                                            onMove(num);
-                                        } else if (!value || value !== num) {
-                                            onAssign(num);
-                                        }
-                                    }
-                                    setMode('view');
-                                }}
-                                className={`
-                                    h-8 flex items-center justify-center rounded-lg font-black text-xs sm:text-sm border transition-all active:scale-95
-                                    ${value === num 
-                                        ? 'bg-brand-600 text-white border-brand-700 shadow-inner cursor-default opacity-50' 
-                                        : 'bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200'
-                                    }
-                                `}
-                                disabled={value === num}
-                            >
-                                {num === 11 ? 'T' : num}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <BedSelectionGrid 
+                    currentValue={value}
+                    activeBedIds={activeBedIds}
+                    onSelect={handleGridSelect}
+                    disableHighlight={isLogEditMode} // Disable gray backgrounds in log edit mode
+                />
             </ContextMenu>
         );
     }
 
-    // 2. Input Mode (Log or Assign) - Legacy fallback or manual menu trigger
     if (mode === 'edit_log' || mode === 'edit_assign') {
         return (
             <ContextMenu
@@ -176,7 +166,6 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         );
     }
 
-    // 3. Default Menu (Should only appear for Active beds without confirm, or fallback)
     if (mode === 'menu') {
         return (
             <ContextMenu

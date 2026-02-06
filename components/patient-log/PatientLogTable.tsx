@@ -12,6 +12,8 @@ interface PatientLogTableProps {
   onCreate: (updates: Partial<PatientVisit>) => Promise<string>;
   onSelectLog: (id: string) => void;
   onMovePatient: (visitId: string, currentBedId: number, newBedId: number) => void;
+  onEditActive?: (bedId: number) => void;
+  activeBedIds?: number[];
 }
 
 export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
@@ -21,7 +23,9 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
   onDelete,
   onCreate,
   onSelectLog,
-  onMovePatient
+  onMovePatient,
+  onEditActive,
+  activeBedIds = []
 }) => {
   // 항상 10개의 빈 행을 유지하여 연속 입력 편의성 제공
   const EMPTY_ROWS_COUNT = 10;
@@ -41,6 +45,8 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
               onDelete={onDelete}
               onSelectLog={onSelectLog}
               onMovePatient={onMovePatient}
+              onEditActive={onEditActive}
+              activeBedIds={activeBedIds}
             />
           ))}
           
@@ -51,6 +57,7 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
               isDraft={true}
               onCreate={onCreate}
               onSelectLog={onSelectLog}
+              activeBedIds={activeBedIds}
             />
           ))}
         </tbody>

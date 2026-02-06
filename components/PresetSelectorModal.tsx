@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, memo } from 'react';
-import { X, Play, ChevronLeft, Eraser } from 'lucide-react';
+import { X, Play, ChevronLeft, Eraser, Check } from 'lucide-react';
 import { Preset, TreatmentStep, QuickTreatment } from '../types';
 import { OptionToggles } from './preset-selector/OptionToggles';
 import { PresetListView } from './preset-selector/PresetListView';
@@ -69,6 +70,7 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
   if (!isOpen || targetBedId === null) return null;
 
   const isTractionBed = targetBedId === 11;
+  // targetBedId 0 signals Log Edit Mode
   const isLogMode = targetBedId === 0;
 
   const handleTractionStart = () => {
@@ -137,14 +139,17 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
         
         <OptionToggles options={options} setOptions={setOptions} />
 
-        {/* Content Area: Reduced padding on mobile (p-2) to allow 4-col grid to fit better */}
         <div className="p-2 sm:p-5 overflow-y-auto flex-1 space-y-4 custom-scrollbar">
           {previewPreset ? (
-             <TreatmentPreview 
-               preset={previewPreset} 
-               setPreset={setPreviewPreset} 
-               onConfirm={handleConfirmStart} 
-             />
+             <div className="space-y-4">
+               <TreatmentPreview 
+                 preset={previewPreset} 
+                 setPreset={setPreviewPreset} 
+                 onConfirm={handleConfirmStart} 
+                 actionLabel={isLogMode ? "수정 완료" : "설정 확인 및 치료 시작"}
+                 isLogEdit={isLogMode}
+               />
+             </div>
           ) : isTractionBed ? (
             <div className="flex flex-col gap-6 py-4">
               <div className="flex flex-col items-center gap-2">
@@ -155,7 +160,13 @@ export const PresetSelectorModal: React.FC<PresetSelectorModalProps> = memo(({
                   <button onClick={() => setTractionDuration(tractionDuration + 1)} className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xl font-bold">+</button>
                 </div>
               </div>
-              <button onClick={handleTractionStart} className="w-full py-4 bg-brand-600 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"><Play className="w-6 h-6 fill-current" /> 치료 시작</button>
+              <button 
+                onClick={handleTractionStart} 
+                className="w-full py-4 bg-brand-600 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+              >
+                {isLogMode ? <Check className="w-6 h-6" /> : <Play className="w-6 h-6 fill-current" />} 
+                {isLogMode ? '수정 완료' : '치료 시작'}
+              </button>
             </div>
           ) : (
             <>

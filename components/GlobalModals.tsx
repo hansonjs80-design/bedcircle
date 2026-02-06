@@ -58,70 +58,81 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     is_manual: options?.isManual,
   });
 
-  // Handler wrappers to close modals after action
+  // --- STRICT SEPARATION OF LOGIC ---
+
+  // 1. Preset Selection Handler
   const handleSelectPreset = (bedId: number, presetId: string, options: any) => {
     if (selectingLogId) {
-      // Logic for Log Editing
+      // [LOG EDIT MODE]
+      // CRITICAL: Pass 'true' (skipBedSync) to PREVENT bed activation.
+      // We only want to update the text record.
       const preset = presets.find(p => p.id === presetId);
       if (preset) {
         updateVisitWithBedSync(selectingLogId, {
           treatment_name: generateTreatmentString(preset.steps),
           ...mapOptionsToFlags(options)
-        });
+        }, true); 
       }
       setSelectingLogId(null);
     } else {
-      // Logic for Bed Control
+      // [LIVE BED CONTROL]
       selectPreset(bedId, presetId, options);
       setSelectingBedId(null);
     }
   };
 
+  // 2. Custom Start Handler
   const handleCustomStart = (bedId: number, name: string, steps: TreatmentStep[], options: any) => {
     if (selectingLogId) {
+       // [LOG EDIT MODE]
        updateVisitWithBedSync(selectingLogId, {
          treatment_name: generateTreatmentString(steps),
          ...mapOptionsToFlags(options)
-       });
+       }, true);
        setSelectingLogId(null);
     } else {
+       // [LIVE BED CONTROL]
        startCustomPreset(bedId, name, steps, options);
        setSelectingBedId(null);
     }
   };
 
+  // 3. Quick Start Handler
   const handleQuickStart = (bedId: number, template: QuickTreatment, options: any) => {
     if (selectingLogId) {
-      // Single step treatment
+      // [LOG EDIT MODE]
       updateVisitWithBedSync(selectingLogId, {
         treatment_name: template.label || template.name,
         ...mapOptionsToFlags(options)
-      });
+      }, true);
       setSelectingLogId(null);
     } else {
+      // [LIVE BED CONTROL]
       startQuickTreatment(bedId, template, options);
       setSelectingBedId(null);
     }
   };
   
+  // 4. Traction Start Handler
   const handleStartTraction = (bedId: number, duration: number, options: any) => {
     if (selectingLogId) {
-       // Merge options and force is_traction=true using a new object to avoid duplicate key error
+       // [LOG EDIT MODE]
        const { is_traction: _ignored, ...otherFlags } = mapOptionsToFlags(options);
        const updatePayload = {
          treatment_name: '견인',
          ...otherFlags,
          is_traction: true
        };
-       updateVisitWithBedSync(selectingLogId, updatePayload);
+       updateVisitWithBedSync(selectingLogId, updatePayload, true);
        setSelectingLogId(null);
     } else {
+       // [LIVE BED CONTROL]
        startTraction(bedId, duration, options);
        setSelectingBedId(null);
     }
   };
   
-  // Log Mode: Clear content
+  // 5. Clear Log Handler (Log Mode Only)
   const handleClearLog = () => {
     if (selectingLogId) {
       updateVisitWithBedSync(selectingLogId, {
@@ -131,7 +142,7 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         is_traction: false,
         is_eswt: false,
         is_manual: false,
-      });
+      }, true);
       setSelectingLogId(null);
     }
   };
@@ -142,7 +153,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     return visits.find(v => v.id === selectingLogId) || null;
   }, [selectingLogId, visits]);
 
-  // Memoize initial options to pass correct flags to modal
   const modalInitialOptions = useMemo(() => {
     if (activeLogEntry) {
       return {
@@ -164,18 +174,16 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   }, [activeLogEntry, presets]);
 
 
-  // Helper to get editing bed data
   const getBed = (id: number) => beds.find(b => b.id === id) || beds[0];
   const editingBed = editingBedId ? getBed(editingBedId) : null;
   const editingBedSteps = editingBed ? (editingBed.customPreset?.steps || presets.find(p => p.id === editingBed.currentPresetId)?.steps || []) : [];
 
   const isModalOpen = selectingBedId !== null || selectingLogId !== null;
-  // If editing a log, pass a dummy ID (e.g. 0) or handle null inside the modal. 
+  // If editing a log, pass 0 as dummy ID to signal "Log Mode" to the modal
   const targetBedIdForModal = selectingBedId !== null ? selectingBedId : (selectingLogId ? 0 : null);
 
   return (
     <Suspense fallback={null}>
-      {/* Preset Selector Modal */}
       <PresetSelectorModal 
         isOpen={isModalOpen}
         onClose={() => {
@@ -193,7 +201,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         initialPreset={modalInitialPreset}
       />
 
-      {/* Edit Overlay */}
       {editingBed && (
         <BedEditOverlay 
           bed={editingBed}
@@ -209,7 +216,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         />
       )}
 
-      {/* Bed Move Modal (Smart Position) */}
       {movingPatientState !== null && (
         <BedMoveModal 
           fromBedId={movingPatientState.bedId}
@@ -219,7 +225,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         />
       )}
 
-      {/* Settings Panel */}
       <SettingsPanel 
         isOpen={isMenuOpen} 
         onClose={onCloseMenu}
@@ -228,7 +233,6 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         onResetAllBeds={resetAll}
       />
 
-      {/* Backdrop for Menu */}
       {isMenuOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onCloseMenu} />
       )}

@@ -416,6 +416,52 @@ export const useBedManager = (
     clearBed(fromBedId);
   }, [updateBedState, clearBed]);
 
+  // LIVE EDIT: Update steps without resetting timer unless strictly necessary
+  const updateBedSteps = useCallback((bedId: number, newSteps: TreatmentStep[]) => {
+      const bed = bedsRef.current.find(b => b.id === bedId);
+      if (!bed) return;
+
+      const oldSteps = bed.customPreset?.steps || presets.find(p => p.id === bed.currentPresetId)?.steps || [];
+      const currentIdx = bed.currentStepIndex;
+      
+      const oldCurrentStep = oldSteps[currentIdx];
+      const newCurrentStep = newSteps[currentIdx];
+
+      // Detect if the currently running step has been altered (ID or Duration changed)
+      // Note: If newSteps length is shorter and currentIdx is out of bounds, newCurrentStep will be undefined
+      const isCurrentStepChanged = !newCurrentStep ||
+                                   !oldCurrentStep || 
+                                   newCurrentStep.id !== oldCurrentStep.id ||
+                                   newCurrentStep.duration !== oldCurrentStep.duration;
+
+      const updates: Partial<BedState> = {
+          // Always update the custom preset with new list
+          customPreset: { id: `custom-edit-${Date.now()}`, name: '치료(수정됨)', steps: newSteps }
+      };
+
+      if (isCurrentStepChanged) {
+          // If the currently active step was touched, we must reset the timer for accuracy
+          if (newCurrentStep) {
+              updates.remainingTime = newCurrentStep.duration;
+              updates.originalDuration = newCurrentStep.duration;
+              updates.startTime = Date.now();
+              updates.isPaused = false;
+          } else {
+              // If current step no longer exists (e.g. deleted/shortened list), complete or reset
+              updates.status = BedStatus.COMPLETED;
+              updates.remainingTime = 0;
+          }
+      } 
+      // If current step is NOT changed, we do NOT touch remainingTime/startTime/isPaused.
+      // The user can add/remove steps around it seamlessly.
+
+      updateBedState(bedId, updates);
+      
+      if (onUpdateVisit) {
+          onUpdateVisit(bedId, { treatment_name: generateTreatmentString(newSteps) });
+      }
+  }, [presets, updateBedState, onUpdateVisit]);
+
   return { 
     beds, 
     selectPreset, 
@@ -440,15 +486,7 @@ export const useBedManager = (
       updateBedState(bedId, { memos: newMemos });
     },
     updateBedDuration: (bedId: number, dur: number) => updateBedState(bedId, { startTime: Date.now(), remainingTime: dur, originalDuration: dur, isPaused: false }),
-    updateBedSteps: (bedId: number, steps: TreatmentStep[]) => {
-      const bed = bedsRef.current.find(b => b.id === bedId);
-      if (!bed) return;
-      updateBedState(bedId, { customPreset: { id: 'custom', name: '치료', steps } });
-      
-      if (onUpdateVisit) {
-          onUpdateVisit(bedId, { treatment_name: generateTreatmentString(steps) });
-      }
-    },
+    updateBedSteps, // Uses the new smart update logic
     clearBed, 
     resetAll: () => bedsRef.current.forEach(bed => clearBed(bed.id)),
     realtimeStatus,

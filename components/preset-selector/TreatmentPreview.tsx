@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Play, ChevronUp, ChevronDown, Minus, Plus, PlusCircle, Trash2 } from 'lucide-react';
+import { Play, ChevronUp, ChevronDown, Minus, Plus, PlusCircle, Trash2, Check } from 'lucide-react';
 import { Preset, TreatmentStep, QuickTreatment } from '../../types';
 import { useTreatmentContext } from '../../contexts/TreatmentContext';
 
@@ -8,10 +8,18 @@ interface TreatmentPreviewProps {
   preset: Preset;
   setPreset: React.Dispatch<React.SetStateAction<Preset | null>>;
   onConfirm: () => void;
+  actionLabel?: string;
+  isLogEdit?: boolean;
 }
 
-export const TreatmentPreview: React.FC<TreatmentPreviewProps> = ({ preset, setPreset, onConfirm }) => {
-  const { quickTreatments } = useTreatmentContext();
+export const TreatmentPreview: React.FC<TreatmentPreviewProps> = ({ 
+  preset, 
+  setPreset, 
+  onConfirm,
+  actionLabel = "설정 확인 및 치료 시작",
+  isLogEdit = false
+}) => {
+  const { quickTreatments } = useTreatmentContext(); 
 
   const updateDuration = (idx: number, change: number) => {
     const newSteps = [...preset.steps];
@@ -47,6 +55,8 @@ export const TreatmentPreview: React.FC<TreatmentPreviewProps> = ({ preset, setP
       steps: [...preset.steps, newStep] 
     });
   };
+
+  const ButtonIcon = isLogEdit ? Check : Play;
 
   return (
     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
@@ -142,8 +152,8 @@ export const TreatmentPreview: React.FC<TreatmentPreviewProps> = ({ preset, setP
         disabled={preset.steps.length === 0}
         className="w-full py-3 bg-brand-600 text-white rounded-xl font-black text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/20 hover:bg-brand-700 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all mt-2 mb-1 disabled:opacity-50 disabled:pointer-events-none"
       >
-        <Play className="w-5 h-5 fill-current" />
-        설정 확인 및 치료 시작
+        <ButtonIcon className="w-5 h-5 fill-current" />
+        {actionLabel}
       </button>
 
       {/* 추가 치료 선택 섹션 */}

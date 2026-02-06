@@ -1,5 +1,5 @@
 
-import React, { useState, Suspense, useCallback } from 'react';
+import React, { useState, Suspense, useCallback, useMemo } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
 import { usePatientLogContext } from '../contexts/PatientLogContext';
 import { PatientLogPrintView } from './patient-log/PatientLogPrintView';
@@ -7,6 +7,7 @@ import { PatientLogHeader } from './patient-log/PatientLogHeader';
 import { PatientLogTable } from './patient-log/PatientLogTable';
 import { Loader2 } from 'lucide-react';
 import { useLogStatusLogic } from '../hooks/useLogStatusLogic';
+import { BedStatus } from '../types';
 
 const PrintPreviewModal = React.lazy(() => import('./modals/PrintPreviewModal').then(module => ({ default: module.PrintPreviewModal })));
 
@@ -15,15 +16,19 @@ interface PatientLogPanelProps {
 }
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
-  const { setSelectingLogId, beds, movePatient, updateVisitWithBedSync } = useTreatmentContext();
+  const { setSelectingLogId, beds, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
   const { visits, currentDate, setCurrentDate, changeDate, addVisit, deleteVisit } = usePatientLogContext();
   
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Performance Optimization: 
   // Extract status logic to prevent re-rendering on every timer tick.
-  // The 'beds' prop in Context changes every second, but 'useLogStatusLogic' internally memoizes based on status only.
   const { getRowStatus } = useLogStatusLogic(beds, visits);
+
+  // Derive active bed IDs for visual indication in BedSelectorCell
+  const activeBedIds = useMemo(() => 
+    beds.filter(b => b.status === BedStatus.ACTIVE).map(b => b.id), 
+  [beds]);
 
   const handlePrintClick = () => {
     setIsPreviewOpen(true);
@@ -54,6 +59,8 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
           onCreate={addVisit}
           onSelectLog={setSelectingLogId}
           onMovePatient={handleMovePatient}
+          onEditActive={setEditingBedId}
+          activeBedIds={activeBedIds}
         />
 
         <div className="p-2 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 shrink-0 text-center">

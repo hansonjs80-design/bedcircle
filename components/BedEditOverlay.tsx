@@ -72,8 +72,8 @@ export const BedEditOverlay: React.FC<BedEditOverlayProps> = memo(({
         </div>
         
         <div className="p-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 shrink-0 pb-6 sm:pb-4">
-           <button onClick={onClose} className="w-full py-3.5 bg-gray-900 dark:bg-slate-700 text-white text-sm rounded-xl font-bold shadow-lg shadow-gray-200 dark:shadow-none active:scale-[0.98] transition-transform hover:bg-gray-800 dark:hover:bg-slate-600">
-             완료 및 닫기
+           <button onClick={onClose} className="w-full py-3.5 bg-brand-600 dark:bg-brand-600 text-white text-sm rounded-xl font-bold shadow-lg shadow-brand-500/20 dark:shadow-none active:scale-[0.98] transition-transform hover:bg-brand-700 dark:hover:bg-brand-500">
+             수정 완료
            </button>
         </div>
       </div>
