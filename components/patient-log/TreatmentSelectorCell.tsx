@@ -51,14 +51,15 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
     }
 
     // 2. Active Row -> Live Edit 
-    if (rowStatus === 'active') {
+    // Type assertion to fix TS2367 build error
+    if ((rowStatus as string) === 'active') {
         onOpenSelector();
         return;
     }
 
     // 3. Log Edit Mode
     // If the row has content (value exists) but is NOT active, treat as Log Edit Mode
-    if (value && rowStatus !== 'active') {
+    if (value && (rowStatus as string) !== 'active') {
         onOpenSelector();
         return;
     }
@@ -94,8 +95,8 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
   };
 
   const getTitle = () => {
-      if (directSelector || rowStatus === 'active') return "더블클릭하여 처방 수정";
-      if (value && rowStatus !== 'active') return "더블클릭하여 로그 수정 (배드 미작동)";
+      if (directSelector || (rowStatus as string) === 'active') return "더블클릭하여 처방 수정";
+      if (value && (rowStatus as string) !== 'active') return "더블클릭하여 로그 수정 (배드 미작동)";
       return "더블클릭하여 수정 옵션 열기";
   };
 
@@ -108,7 +109,7 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
       );
     }
 
-    if (rowStatus === 'active' && activeStepIndex >= 0) {
+    if ((rowStatus as string) === 'active' && activeStepIndex >= 0) {
       const parts = value.split('/');
       return (
         <>
