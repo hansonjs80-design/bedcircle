@@ -20,8 +20,11 @@ interface PatientLogRowProps {
   activeBedIds?: number[];
   activeStepColor?: string;
   activeStepIndex?: number;
+  isLastStep?: boolean;
+  timerStatus?: 'normal' | 'warning' | 'overtime';
   onNextStep?: () => void;
   onPrevStep?: () => void;
+  onClearBed?: () => void;
 }
 
 export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
@@ -37,8 +40,11 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   activeBedIds = [],
   activeStepColor,
   activeStepIndex = -1,
+  isLastStep = false,
+  timerStatus = 'normal',
   onNextStep,
-  onPrevStep
+  onPrevStep,
+  onClearBed
 }) => {
   
   const handleAssign = async (newBedId: number) => {
@@ -141,6 +147,11 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   // ASSIGNMENT MODE DEFINITION
   const isAssignmentMode = !isDraft && !!visit?.bed_id && !hasTreatment;
 
+  // Dot Color Logic
+  let dotColorClass = 'bg-brand-500'; // Default Blue
+  if (timerStatus === 'warning') dotColorClass = 'bg-orange-500';
+  if (timerStatus === 'overtime') dotColorClass = 'bg-red-600';
+
   return (
     <tr className={rowClasses}>
       {/* 1. Bed ID */}
@@ -158,7 +169,9 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         />
         {rowStatus !== 'none' && (
           <div className="absolute top-1 right-1 pointer-events-none">
-            {rowStatus === 'active' && <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse shadow-sm" />}
+            {rowStatus === 'active' && (
+              <div className={`w-1.5 h-1.5 rounded-full ${dotColorClass} animate-pulse shadow-sm transition-colors duration-300`} />
+            )}
             {rowStatus === 'completed' && <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />}
           </div>
         )}
@@ -208,8 +221,10 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           // Active Step Visuals
           activeStepColor={activeStepColor}
           activeStepIndex={activeStepIndex}
+          isLastStep={isLastStep}
           onNextStep={onNextStep}
           onPrevStep={onPrevStep}
+          onClearBed={onClearBed}
         />
       </td>
 

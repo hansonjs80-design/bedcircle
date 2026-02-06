@@ -117,8 +117,9 @@ export const MainLayout: React.FC = () => {
         )}
 
         {/* Right: Patient Log Sidebar (Visible only on XL screens e.g., 1280px+) */}
+        {/* Width Increased by ~20%: 440px -> 530px, 506px -> 600px */}
         {/* Hidden in Full Screen Mode */}
-        <aside className={`hidden xl:block w-[440px] 2xl:w-[506px] shrink-0 h-full relative z-30 ${isFullScreen ? 'hidden' : ''}`}>
+        <aside className={`hidden xl:block w-[530px] 2xl:w-[600px] shrink-0 h-full relative z-30 ${isFullScreen ? 'hidden' : ''}`}>
            <Suspense fallback={<div className="w-full h-full bg-white dark:bg-slate-900 animate-pulse" />}>
              <PatientLogPanel />
            </Suspense>

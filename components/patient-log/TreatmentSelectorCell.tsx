@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit3, List, Activity, CheckCircle, SkipForward, SkipBack, Check, X } from 'lucide-react';
+import { Edit3, List, Activity, CheckCircle, SkipForward, SkipBack, Check, X, LogOut } from 'lucide-react';
 import { PatientVisit } from '../../types';
 import { ContextMenu } from '../common/ContextMenu';
 
@@ -15,8 +15,10 @@ interface TreatmentSelectorCellProps {
   directSelector?: boolean;
   activeStepColor?: string; // Color class for the active step text
   activeStepIndex?: number; // The index of the currently active step
+  isLastStep?: boolean;
   onNextStep?: () => void; // Handler for next step button
   onPrevStep?: () => void; // Handler for prev step button
+  onClearBed?: () => void; // Handler for clearing bed
 }
 
 export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({ 
@@ -29,14 +31,16 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
   directSelector = false,
   activeStepColor,
   activeStepIndex = -1,
+  isLastStep = false,
   onNextStep,
-  onPrevStep
+  onPrevStep,
+  onClearBed
 }) => {
   const [mode, setMode] = useState<'view' | 'menu' | 'edit_text'>('view');
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   
   // Compact Popup State
-  const [popupState, setPopupState] = useState<{ type: 'prev' | 'next', x: number, y: number } | null>(null);
+  const [popupState, setPopupState] = useState<{ type: 'prev' | 'next' | 'clear', x: number, y: number } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,7 +79,7 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
     setMode('menu');
   };
 
-  const handleStepButtonClick = (e: React.MouseEvent, type: 'prev' | 'next') => {
+  const handleStepButtonClick = (e: React.MouseEvent, type: 'prev' | 'next' | 'clear') => {
     e.stopPropagation();
     
     // 마우스 커서 바로 위 위치 계산
@@ -90,6 +94,8 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
         onNextStep();
     } else if (popupState?.type === 'prev' && onPrevStep) {
         onPrevStep();
+    } else if (popupState?.type === 'clear' && onClearBed) {
+        onClearBed();
     }
     setPopupState(null);
   };
@@ -114,6 +120,15 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
       if (directSelector || (rowStatus as string) === 'active') return "더블클릭하여 처방 수정";
       if (value && (rowStatus as string) !== 'active') return "더블클릭하여 로그 수정 (배드 미작동)";
       return "더블클릭하여 수정 옵션 열기";
+  };
+
+  const getPopupMessage = () => {
+      switch (popupState?.type) {
+          case 'next': return isLastStep ? '치료를 완료할까요?' : '다음 단계로?';
+          case 'prev': return '이전 단계로?';
+          case 'clear': return '침상 비우시겠습니까?';
+          default: return '';
+      }
   };
 
   const renderContent = () => {
@@ -169,10 +184,12 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                     className="flex items-center w-full h-full cursor-pointer px-1 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors relative"
                     title={getTitle()}
                 >
-                    {/* Active Step Controller (Left Side Group) */}
-                    {rowStatus === 'active' && (
+                    {/* Active/Completed Control Group (Left Side) */}
+                    {(rowStatus === 'active' || rowStatus === 'completed') && (
                        <div className="absolute left-0 z-10 flex items-center h-full gap-0.5 px-0.5 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900">
-                          {onPrevStep && activeStepIndex > 0 && (
+                          
+                          {/* Prev Button (Only Active) */}
+                          {rowStatus === 'active' && onPrevStep && activeStepIndex > 0 && (
                             <button 
                                 onClick={(e) => handleStepButtonClick(e, 'prev')}
                                 className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 hover:text-brand-600 transition-all active:scale-95"
@@ -181,14 +198,33 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                                 <SkipBack className="w-3.5 h-3.5 fill-current" />
                             </button>
                           )}
-                          {onNextStep && (
+
+                          {/* Next/Complete Button (Only Active) */}
+                          {rowStatus === 'active' && onNextStep && (
                             <button 
                                 onClick={(e) => handleStepButtonClick(e, 'next')}
-                                className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 hover:text-brand-600 transition-all active:scale-95"
-                                title="다음 단계"
+                                className={`p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 transition-all active:scale-95 ${
+                                    isLastStep ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-brand-600'
+                                }`}
+                                title={isLastStep ? "치료 완료" : "다음 단계"}
                             >
-                                <SkipForward className="w-3.5 h-3.5 fill-current" />
+                                {isLastStep ? (
+                                    <SkipForward className="w-3.5 h-3.5 fill-current" />
+                                ) : (
+                                    <SkipForward className="w-3.5 h-3.5 fill-current" />
+                                )}
                             </button>
+                          )}
+
+                          {/* Clear Button (Only Completed) - Moved from right to left */}
+                          {rowStatus === 'completed' && onClearBed && (
+                             <button
+                                onClick={(e) => handleStepButtonClick(e, 'clear')}
+                                className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 hover:text-red-600 transition-all active:scale-95"
+                                title="침상 비우기"
+                             >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                             </button>
                           )}
                        </div>
                     )}
@@ -199,11 +235,6 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                          </span>
                     </div>
                     
-                    {rowStatus === 'completed' && (
-                        <div className="absolute right-1 text-gray-400 pointer-events-none">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        </div>
-                    )}
                     {rowStatus === 'active' && (
                         <div className="absolute right-1 text-brand-500 animate-pulse pointer-events-none">
                         <Activity className="w-3.5 h-3.5" />
@@ -220,18 +251,22 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                     className="absolute bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-600 p-2 animate-in zoom-in-95 duration-150 origin-bottom"
                     style={{ 
                         top: popupState.y - 70, // 70px above cursor
-                        left: popupState.x - 60, // Centered (approx)
-                        width: 120
+                        left: popupState.x - 70, // Centered (approx)
+                        width: 140
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <p className="text-[10px] font-bold text-center text-gray-600 dark:text-gray-300 mb-1.5">
-                        {popupState.type === 'next' ? '다음 단계로?' : '이전 단계로?'}
+                    <p className="text-[10px] font-bold text-center text-gray-600 dark:text-gray-300 mb-1.5 whitespace-nowrap">
+                        {getPopupMessage()}
                     </p>
                     <div className="flex gap-1">
                         <button 
                             onClick={executeStepAction}
-                            className="flex-1 py-1 bg-brand-600 text-white rounded text-[10px] font-bold hover:bg-brand-700 flex items-center justify-center gap-0.5"
+                            className={`flex-1 py-1 text-white rounded text-[10px] font-bold flex items-center justify-center gap-0.5 ${
+                                popupState.type === 'clear' || (popupState.type === 'next' && isLastStep) 
+                                    ? 'bg-red-600 hover:bg-red-700' 
+                                    : 'bg-brand-600 hover:bg-brand-700'
+                            }`}
                         >
                             <Check className="w-3 h-3" /> 예
                         </button>

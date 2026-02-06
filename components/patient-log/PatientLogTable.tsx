@@ -18,6 +18,7 @@ interface PatientLogTableProps {
   onEditActive?: (bedId: number) => void;
   onNextStep?: (bedId: number) => void;
   onPrevStep?: (bedId: number) => void;
+  onClearBed?: (bedId: number) => void;
 }
 
 export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
@@ -32,7 +33,8 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
   onMovePatient,
   onEditActive,
   onNextStep,
-  onPrevStep
+  onPrevStep,
+  onClearBed
 }) => {
   // 항상 10개의 빈 행을 유지하여 연속 입력 편의성 제공
   const EMPTY_ROWS_COUNT = 10;
@@ -51,19 +53,45 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
             // --- Active Step Logic ---
             let activeStepColorClass: string | undefined = undefined;
             let activeStepIndex: number = -1;
+            let isLastStep = false;
+            let timerStatus: 'normal' | 'warning' | 'overtime' = 'normal'; // New: Timer status
+            
             let handleNextStep: (() => void) | undefined = undefined;
             let handlePrevStep: (() => void) | undefined = undefined;
+            let handleClearBed: (() => void) | undefined = undefined;
 
-            if (rowStatus === 'active' && visit.bed_id) {
+            if ((rowStatus === 'active' || rowStatus === 'completed') && visit.bed_id) {
                const bed = beds.find(b => b.id === visit.bed_id);
                if (bed) {
+                  // Calculate Timer Status for the Dot
+                  if (bed.status === 'ACTIVE' && !bed.isPaused) {
+                      // Check only if the current step has a timer enabled
+                      const currentPreset = bed.customPreset || presets.find(p => p.id === bed.currentPresetId);
+                      const currentStepInfo = currentPreset?.steps[bed.currentStepIndex];
+                      
+                      if (currentStepInfo?.enableTimer) {
+                          if (bed.remainingTime <= 0) {
+                              timerStatus = 'overtime';
+                          } else if (bed.remainingTime < 60) {
+                              timerStatus = 'warning';
+                          }
+                      }
+                  }
+
                   // Find current step color
                   const preset = bed.customPreset || presets.find(p => p.id === bed.currentPresetId);
+                  const totalSteps = preset?.steps.length || 0;
+                  
+                  // Calculate if it is the last step (for Red button)
+                  isLastStep = bed.currentStepIndex === totalSteps - 1;
+
                   const step = preset?.steps[bed.currentStepIndex];
                   
-                  if (step) {
-                     activeStepColorClass = mapBgToTextClass(step.color);
-                     activeStepIndex = bed.currentStepIndex;
+                  if (step || rowStatus === 'completed') {
+                     if (step) {
+                        activeStepColorClass = mapBgToTextClass(step.color);
+                        activeStepIndex = bed.currentStepIndex;
+                     }
                      
                      // If onNextStep provided, create handler
                      if (onNextStep) {
@@ -71,6 +99,9 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
                      }
                      if (onPrevStep) {
                         handlePrevStep = () => onPrevStep(bed.id);
+                     }
+                     if (onClearBed) {
+                        handleClearBed = () => onClearBed(bed.id);
                      }
                   }
                }
@@ -90,8 +121,11 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
                 activeBedIds={activeBedIds}
                 activeStepColor={activeStepColorClass}
                 activeStepIndex={activeStepIndex}
+                isLastStep={isLastStep}
+                timerStatus={timerStatus} // Pass the status
                 onNextStep={handleNextStep}
                 onPrevStep={handlePrevStep}
+                onClearBed={handleClearBed}
               />
             );
           })}

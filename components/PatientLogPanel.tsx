@@ -16,7 +16,7 @@ interface PatientLogPanelProps {
 }
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
-  const { setSelectingLogId, setSelectingBedId, beds, presets, nextStep, prevStep, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
+  const { setSelectingLogId, setSelectingBedId, beds, presets, nextStep, prevStep, movePatient, updateVisitWithBedSync, setEditingBedId, clearBed } = useTreatmentContext();
   const { visits, currentDate, setCurrentDate, changeDate, addVisit, deleteVisit } = usePatientLogContext();
   
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -67,6 +67,7 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
           onEditActive={setEditingBedId}
           onNextStep={nextStep}
           onPrevStep={prevStep}
+          onClearBed={clearBed}
         />
 
         <div className="p-2 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 shrink-0 text-center">
