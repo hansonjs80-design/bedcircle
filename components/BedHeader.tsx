@@ -84,7 +84,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
               {/* Timer Display */}
               <div 
                 onDoubleClick={handleTimerDoubleClick}
-                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[5px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
+                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[10px] sm:-translate-x-[10px] landscape:-translate-x-[10px] lg:landscape:-translate-x-[10px] ${
                   isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : 
                   isNearEnd ? 'text-red-400 dark:text-red-300' :
                   'text-gray-500 dark:text-gray-400'
@@ -97,7 +97,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
               {/* Pause Button */}
               <button 
                 onClick={handleTogglePause}
-                className={`p-1 landscape:p-0.5 sm:p-2 rounded-lg transition-all active:scale-90 flex items-center justify-center -translate-x-[13px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
+                className={`p-1 landscape:p-0.5 sm:p-2 rounded-lg transition-all active:scale-90 flex items-center justify-center -translate-x-[13px] sm:-translate-x-[10px] landscape:-translate-x-[10px] lg:landscape:-translate-x-[10px] ${
                   bed.isPaused 
                     ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' 
                     : isBedT 
