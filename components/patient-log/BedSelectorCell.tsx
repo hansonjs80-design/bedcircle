@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Edit3, PlayCircle, Hash } from 'lucide-react';
+import { Edit3, PlayCircle, Hash, ArrowRightLeft } from 'lucide-react';
 import { ContextMenu } from '../common/ContextMenu';
 
 interface BedSelectorCellProps {
@@ -9,6 +9,7 @@ interface BedSelectorCellProps {
   onAssign: (newBedId: number) => void;
   className?: string;
   onUpdateLogOnly?: (newBedId: number) => void; 
+  rowStatus?: 'active' | 'completed' | 'none'; // Added rowStatus to check active state
 }
 
 export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({ 
@@ -16,9 +17,10 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   onMove, 
   onAssign,
   className,
-  onUpdateLogOnly
+  onUpdateLogOnly,
+  rowStatus = 'none'
 }) => {
-  const [mode, setMode] = useState<'view' | 'menu' | 'edit_log' | 'edit_assign'>('view');
+  const [mode, setMode] = useState<'view' | 'menu' | 'edit_log' | 'edit_assign' | 'select_target'>('view');
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -32,12 +34,23 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+
+    // SPECIAL LOGIC: Active Bed Double Click
+    if (rowStatus === 'active') {
+        if (window.confirm("방번호를 변경하시겠습니까?")) {
+            setMenuPos({ x: e.clientX, y: e.clientY });
+            setMode('select_target');
+        }
+        return;
+    }
+
+    // Default behavior for other states
     setMenuPos({ x: e.clientX, y: e.clientY });
     setMode('menu');
   };
 
   const handleCommit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
-      if (mode === 'view' || mode === 'menu') return;
+      if (mode === 'view' || mode === 'menu' || mode === 'select_target') return;
 
       const target = e.currentTarget;
       const newVal = parseInt(target.value);
@@ -66,6 +79,48 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   };
 
   const renderContent = () => {
+    // 1. Target Selection Mode (Grid 1-10) for Active Bed Change
+    if (mode === 'select_target') {
+        return (
+            <ContextMenu
+                title="이동할 배드 선택 (1~10)"
+                position={menuPos}
+                onClose={() => setMode('view')}
+                width={200}
+            >
+                <div className="p-2">
+                    <div className="grid grid-cols-5 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            <button
+                                key={num}
+                                onClick={() => {
+                                    if (value && num !== value) {
+                                        onMove(num);
+                                    }
+                                    setMode('view');
+                                }}
+                                className={`
+                                    h-8 flex items-center justify-center rounded-lg font-black text-xs sm:text-sm border transition-all active:scale-95
+                                    ${value === num 
+                                        ? 'bg-brand-600 text-white border-brand-700 shadow-inner cursor-default opacity-50' 
+                                        : 'bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200'
+                                    }
+                                `}
+                                disabled={value === num}
+                            >
+                                {num}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2 text-center">
+                        * 11번(견인) 제외
+                    </p>
+                </div>
+            </ContextMenu>
+        );
+    }
+
+    // 2. Input Mode (Log or Assign)
     if (mode === 'edit_log' || mode === 'edit_assign') {
         return (
             <ContextMenu
@@ -94,6 +149,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         );
     }
 
+    // 3. Default Menu (for non-active beds)
     if (mode === 'menu') {
         return (
             <ContextMenu
@@ -137,7 +193,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         <div 
         onDoubleClick={handleDoubleClick}
         className={`w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors group select-none ${className}`}
-        title="더블클릭하여 수정/배정 메뉴 열기"
+        title={rowStatus === 'active' ? "더블클릭하여 방번호 변경" : "더블클릭하여 수정/배정 메뉴 열기"}
         >
         {value ? (
             <span className="text-base sm:text-lg xl:text-[12px] font-black text-slate-700 dark:text-slate-200 group-hover:scale-110 transition-transform">
