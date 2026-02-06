@@ -139,7 +139,7 @@ export const TreatmentProvider: React.FC<{ children: ReactNode }> = ({ children 
          if (isBedAssignmentChange) {
              const targetBed = bedsRef.current.find(b => b.id === targetBedId);
              if (targetBed && targetBed.status === BedStatus.ACTIVE) {
-                 if (!window.confirm(`${targetBedId}번 배드는 현재 활성화(치료 중) 상태입니다.\n\n새로운 환자로 덮어쓰시겠습니까?`)) {
+                 if (!window.confirm(`${targetBedId}번 배드는 비어있지 않습니다.\n배드카드를 비우고 입력할까요?`)) {
                      return;
                  }
                  shouldForceRestart = true;

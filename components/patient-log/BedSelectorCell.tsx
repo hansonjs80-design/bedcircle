@@ -39,13 +39,19 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
 
     setMenuPos({ x: e.clientX, y: e.clientY });
 
-    // 1. If Treatment is empty, open selection immediately (No Confirmation)
+    // 1. If Bed is NOT assigned (empty cell), open selection immediately
+    if (!value) {
+        setMode('select_target');
+        return;
+    }
+
+    // 2. If Treatment is empty, open selection immediately (Logic for quick setup)
     if (!hasTreatment) {
         setMode('select_target');
         return;
     }
 
-    // 2. SPECIAL LOGIC: Active Bed Double Click -> Confirm then Select
+    // 3. SPECIAL LOGIC: Active Bed Double Click -> Confirm then Select
     if (rowStatus === 'active') {
         if (window.confirm("방번호를 변경하시겠습니까?")) {
             setMode('select_target');
@@ -53,7 +59,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         return;
     }
 
-    // 3. Default behavior for other states (Context Menu)
+    // 4. Default behavior for assigned beds (Context Menu)
     setMode('menu');
   };
 
@@ -156,7 +162,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         );
     }
 
-    // 3. Default Menu (for non-active beds)
+    // 3. Default Menu (for assigned, non-active beds)
     if (mode === 'menu') {
         return (
             <ContextMenu
@@ -200,7 +206,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         <div 
         onDoubleClick={handleDoubleClick}
         className={`w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors group select-none ${className}`}
-        title={!hasTreatment ? "더블클릭하여 배드 선택" : (rowStatus === 'active' ? "더블클릭하여 방번호 변경" : "더블클릭하여 수정/배정 메뉴 열기")}
+        title={!value ? "더블클릭하여 배드 선택" : (rowStatus === 'active' ? "더블클릭하여 방번호 변경" : "더블클릭하여 수정/배정 메뉴 열기")}
         >
         {value ? (
             <span className={`text-base sm:text-lg xl:text-[12px] font-black group-hover:scale-110 transition-transform ${value === 11 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}>
