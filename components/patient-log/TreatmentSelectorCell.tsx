@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Edit3, List, Activity, CheckCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect, Fragment } from 'react';
+import { Edit3, List, Activity, CheckCircle, SkipForward } from 'lucide-react';
 import { PatientVisit } from '../../types';
 import { ContextMenu } from '../common/ContextMenu';
 
@@ -12,6 +12,9 @@ interface TreatmentSelectorCellProps {
   onCommitText: (val: string) => void;
   onOpenSelector: () => void;
   directSelector?: boolean;
+  activeStepColor?: string; // Color class for the active step text
+  activeStepIndex?: number; // The index of the currently active step
+  onNextStep?: () => void; // Handler for next step button
 }
 
 export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({ 
@@ -21,7 +24,10 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
   rowStatus = 'none',
   onCommitText, 
   onOpenSelector,
-  directSelector = false
+  directSelector = false,
+  activeStepColor,
+  activeStepIndex = -1,
+  onNextStep
 }) => {
   const [mode, setMode] = useState<'view' | 'menu' | 'edit_text'>('view');
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
@@ -62,6 +68,15 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
     setMode('menu');
   };
 
+  const handleNextStepClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onNextStep) {
+        if (window.confirm("다음 단계로 진행하시겠습니까?")) {
+            onNextStep();
+        }
+    }
+  };
+
   const handleTextCommit = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => {
       const target = e.currentTarget;
       if (target.value !== value) {
@@ -84,6 +99,38 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
       return "더블클릭하여 수정 옵션 열기";
   };
 
+  const renderContent = () => {
+    if (!value) {
+      return (
+        <span className="text-gray-400 italic font-bold">
+          {placeholder}
+        </span>
+      );
+    }
+
+    if (rowStatus === 'active' && activeStepIndex >= 0) {
+      const parts = value.split('/');
+      return (
+        <>
+          {parts.map((part, i) => (
+            <Fragment key={i}>
+              <span className={i === activeStepIndex ? `${activeStepColor} transition-colors duration-300` : 'text-gray-700 dark:text-gray-300'}>
+                {part.trim()}
+              </span>
+              {i < parts.length - 1 && <span className="text-gray-400 mx-0.5">/</span>}
+            </Fragment>
+          ))}
+        </>
+      );
+    }
+
+    return (
+      <span className={activeStepColor || 'text-gray-700 dark:text-gray-300'}>
+        {value}
+      </span>
+    );
+  };
+
   return (
     <>
         <div 
@@ -102,12 +149,23 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
                 />
             ) : (
                 <div 
-                    className="flex items-center w-full h-full cursor-pointer px-1 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
+                    className="flex items-center w-full h-full cursor-pointer px-1 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors relative"
                     title={getTitle()}
                 >
-                    <div className="flex-1 min-w-0 flex justify-center">
-                         <span className={`text-xs sm:text-sm xl:text-[11px] font-bold truncate pointer-events-none text-center w-full ${!value ? 'text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>
-                             {value || placeholder}
+                    {/* Active Step Controller (Left Side) */}
+                    {rowStatus === 'active' && onNextStep && (
+                       <button 
+                         onClick={handleNextStepClick}
+                         className="absolute left-1 z-10 p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-400 hover:text-brand-600 transition-all active:scale-95"
+                         title="다음 단계로 진행"
+                       >
+                          <SkipForward className="w-4 h-4 fill-current" />
+                       </button>
+                    )}
+
+                    <div className="flex-1 min-w-0 flex justify-center pl-5 pr-5">
+                         <span className="text-xs sm:text-sm xl:text-[11px] font-bold truncate pointer-events-none text-center w-full">
+                             {renderContent()}
                          </span>
                     </div>
                     

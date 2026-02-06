@@ -86,6 +86,28 @@ export const getStepColor = (
   return 'bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-slate-700';
 };
 
+// --- Helper: Convert Step BG Color to Text Color ---
+export const mapBgToTextClass = (bgClass: string): string => {
+  if (bgClass.startsWith('bg-[#')) {
+     // For arbitrary colors, we can't easily guess contrast, default to brand or dark
+     return 'text-gray-900 dark:text-white';
+  }
+
+  if (bgClass.includes('red')) return 'text-red-600 dark:text-red-400';
+  if (bgClass.includes('blue')) return 'text-blue-600 dark:text-blue-400';
+  if (bgClass.includes('green')) return 'text-emerald-600 dark:text-emerald-400';
+  if (bgClass.includes('orange')) return 'text-orange-600 dark:text-orange-400';
+  if (bgClass.includes('purple')) return 'text-purple-600 dark:text-purple-400';
+  if (bgClass.includes('pink')) return 'text-pink-600 dark:text-pink-400';
+  if (bgClass.includes('cyan')) return 'text-cyan-600 dark:text-cyan-400';
+  if (bgClass.includes('yellow')) return 'text-yellow-600 dark:text-yellow-400';
+  if (bgClass.includes('sky')) return 'text-sky-600 dark:text-sky-400';
+  if (bgClass.includes('violet')) return 'text-violet-600 dark:text-violet-400';
+  if (bgClass.includes('gray')) return 'text-gray-600 dark:text-gray-400';
+  
+  return 'text-gray-700 dark:text-gray-300';
+};
+
 // --- Bed Card Container Styles ---
 
 export const getBedCardStyles = (bed: BedState, isOvertime: boolean): string => {

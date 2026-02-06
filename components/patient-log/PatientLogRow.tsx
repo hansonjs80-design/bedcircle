@@ -18,6 +18,9 @@ interface PatientLogRowProps {
   onMovePatient?: (visitId: string, currentBedId: number, newBedId: number) => void;
   onEditActive?: (bedId: number) => void;
   activeBedIds?: number[];
+  activeStepColor?: string;
+  activeStepIndex?: number;
+  onNextStep?: () => void;
 }
 
 export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
@@ -30,7 +33,10 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   onSelectLog,
   onMovePatient,
   onEditActive,
-  activeBedIds = []
+  activeBedIds = [],
+  activeStepColor,
+  activeStepIndex = -1,
+  onNextStep
 }) => {
   
   const handleAssign = async (newBedId: number) => {
@@ -197,6 +203,10 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           onOpenSelector={handleTreatmentSelectorOpen}
           // Enable direct selector if: No bed assigned OR No treatment entered OR Log Edit Mode
           directSelector={isNoBedAssigned || !hasTreatment || isLogEditMode}
+          // Active Step Visuals
+          activeStepColor={activeStepColor}
+          activeStepIndex={activeStepIndex}
+          onNextStep={onNextStep}
         />
       </td>
 

@@ -73,7 +73,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
           onDoubleClick={handleBedNumberDoubleClick}
           title="더블클릭하여 환자 이동"
         >
-          <span className={`font-black leading-none tracking-tighter ${getBedNumberColor(bed)} text-2xl sm:text-4xl xl:text-5xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-3xl`}>
+          <span className={`font-black leading-none tracking-tighter ${getBedNumberColor(bed)} text-2xl sm:text-4xl lg:text-5xl xl:text-6xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-4xl`}>
             {isBedT ? 'T' : bed.id}
           </span>
         </div>
@@ -84,7 +84,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
               {/* Timer Display */}
               <div 
                 onDoubleClick={handleTimerDoubleClick}
-                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[10px] sm:-translate-x-[10px] landscape:-translate-x-[10px] lg:landscape:-translate-x-[10px] ${
+                className={`flex items-center gap-0.5 font-mono font-black text-xl sm:text-4xl lg:text-5xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-3xl leading-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0.5 select-none transition-colors touch-manipulation -translate-x-[10px] sm:-translate-x-[10px] landscape:-translate-x-[10px] lg:landscape:-translate-x-[10px] ${
                   isOvertime ? 'animate-pulse text-red-600 dark:text-red-500' : 
                   isNearEnd ? 'text-red-400 dark:text-red-300' :
                   'text-gray-500 dark:text-gray-400'
@@ -106,9 +106,9 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
                 }`}
               >
                 {bed.isPaused ? (
-                  <Play className="w-4 h-4 landscape:w-4 landscape:h-4 sm:w-6 sm:h-6 lg:landscape:w-6 lg:landscape:h-6 fill-current" />
+                  <Play className="w-4 h-4 landscape:w-4 landscape:h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 lg:landscape:w-8 lg:landscape:h-8 fill-current" />
                 ) : (
-                  <Pause className="w-4 h-4 landscape:w-4 landscape:h-4 sm:w-6 sm:h-6 lg:landscape:w-6 lg:landscape:h-6 fill-current" />
+                  <Pause className="w-4 h-4 landscape:w-4 landscape:h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 lg:landscape:w-8 lg:landscape:h-8 fill-current" />
                 )}
               </button>
             </>

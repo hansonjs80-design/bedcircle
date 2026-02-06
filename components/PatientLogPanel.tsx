@@ -16,7 +16,7 @@ interface PatientLogPanelProps {
 }
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
-  const { setSelectingLogId, setSelectingBedId, beds, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
+  const { setSelectingLogId, setSelectingBedId, beds, presets, nextStep, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
   const { visits, currentDate, setCurrentDate, changeDate, addVisit, deleteVisit } = usePatientLogContext();
   
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -24,11 +24,6 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
   // Performance Optimization: 
   // Extract status logic to prevent re-rendering on every timer tick.
   const { getRowStatus } = useLogStatusLogic(beds, visits);
-
-  // Derive active bed IDs for visual indication in BedSelectorCell
-  const activeBedIds = useMemo(() => 
-    beds.filter(b => b.status === BedStatus.ACTIVE).map(b => b.id), 
-  [beds]);
 
   const handlePrintClick = () => {
     setIsPreviewOpen(true);
@@ -61,6 +56,8 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
 
         <PatientLogTable 
           visits={visits}
+          beds={beds}
+          presets={presets}
           getRowStatus={getRowStatus}
           onUpdate={updateVisitWithBedSync}
           onDelete={deleteVisit}
@@ -68,7 +65,7 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
           onSelectLog={handleSelectLog}
           onMovePatient={handleMovePatient}
           onEditActive={setEditingBedId}
-          activeBedIds={activeBedIds}
+          onNextStep={nextStep}
         />
 
         <div className="p-2 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 shrink-0 text-center">
