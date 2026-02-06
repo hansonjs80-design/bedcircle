@@ -3,10 +3,10 @@ import React, { useState, Suspense, useCallback } from 'react';
 import { useTreatmentContext } from '../contexts/TreatmentContext';
 import { usePatientLogContext } from '../contexts/PatientLogContext';
 import { PatientLogPrintView } from './patient-log/PatientLogPrintView';
-import { BedStatus } from '../types';
 import { PatientLogHeader } from './patient-log/PatientLogHeader';
 import { PatientLogTable } from './patient-log/PatientLogTable';
 import { Loader2 } from 'lucide-react';
+import { useLogStatusLogic } from '../hooks/useLogStatusLogic';
 
 const PrintPreviewModal = React.lazy(() => import('./modals/PrintPreviewModal').then(module => ({ default: module.PrintPreviewModal })));
 
@@ -20,28 +20,14 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
   
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+  // Performance Optimization: 
+  // Extract status logic to prevent re-rendering on every timer tick.
+  // The 'beds' prop in Context changes every second, but 'useLogStatusLogic' internally memoizes based on status only.
+  const { getRowStatus } = useLogStatusLogic(beds, visits);
+
   const handlePrintClick = () => {
     setIsPreviewOpen(true);
   };
-
-  // Memoize getRowStatus to stabilize prop if possible, 
-  // though 'beds' changes frequently, so this will update frequently.
-  const getRowStatus = useCallback((visitId: string, bedId: number | null): 'active' | 'completed' | 'none' => {
-    if (!bedId) return 'none';
-    
-    const bed = beds.find(b => b.id === bedId);
-    if (!bed) return 'none';
-
-    if (bed.status === BedStatus.IDLE) return 'none';
-
-    const visitsForBed = visits.filter(v => v.bed_id === bedId);
-    visitsForBed.sort((a, b) => (new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()));
-    const latestVisit = visitsForBed[visitsForBed.length - 1];
-
-    if (latestVisit?.id !== visitId) return 'none';
-
-    return bed.status === BedStatus.COMPLETED ? 'completed' : 'active';
-  }, [beds, visits]);
 
   const handleMovePatient = useCallback((visitId: string, currentBedId: number, newBedId: number) => {
       movePatient(currentBedId, newBedId);

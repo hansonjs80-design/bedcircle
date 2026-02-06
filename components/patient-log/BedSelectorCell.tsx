@@ -45,7 +45,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         return;
     }
 
-    // 2. If Treatment is empty, open selection immediately (Logic for quick setup)
+    // 2. If Treatment is empty, open selection immediately (Quick setup logic)
     if (!hasTreatment) {
         setMode('select_target');
         return;
@@ -59,7 +59,14 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         return;
     }
 
-    // 4. Default behavior for assigned beds (Context Menu)
+    // 4. CRITICAL UPDATE: Unsynchronized (Inactive) Row with Value -> Direct Log Edit
+    // 배드와 동기화되지 않은 상태(비활성)이면서 방번호가 있는 경우, 메뉴 없이 바로 선택창 오픈
+    if (value && rowStatus !== 'active') {
+        setMode('select_target');
+        return;
+    }
+
+    // 5. Fallback Default (Should rarely be reached with above logic, but kept for safety)
     setMode('menu');
   };
 
@@ -108,10 +115,17 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
                             <button
                                 key={num}
                                 onClick={() => {
-                                    if (value && num !== value) {
-                                        onMove(num);
-                                    } else if (!value || value !== num) {
-                                        onAssign(num);
+                                    // Logic: If row is NOT active, perform simple log update only
+                                    if (rowStatus !== 'active' && onUpdateLogOnly) {
+                                        onUpdateLogOnly(num);
+                                    } 
+                                    // Logic: If row is ACTIVE or empty, perform move/assign
+                                    else {
+                                        if (value && num !== value) {
+                                            onMove(num);
+                                        } else if (!value || value !== num) {
+                                            onAssign(num);
+                                        }
                                     }
                                     setMode('view');
                                 }}
@@ -162,7 +176,7 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         );
     }
 
-    // 3. Default Menu (for assigned, non-active beds)
+    // 3. Default Menu (Should only appear for Active beds without confirm, or fallback)
     if (mode === 'menu') {
         return (
             <ContextMenu

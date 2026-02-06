@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { EditableCell } from './EditableCell';
 import { BedSelectorCell } from './BedSelectorCell';
 import { TreatmentSelectorCell } from './TreatmentSelectorCell'; 
-import { PatientStatusIcons } from './PatientStatusIcons';
+import { PatientStatusCell } from './PatientStatusCell';
 import { PatientVisit } from '../../types';
 
 interface PatientLogRowProps {
@@ -67,7 +67,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
      }
   };
 
-  // Treatment Selector (Full Sync)
+  // Treatment Selector (Full Sync or Log Edit depending on context inside Modal)
   const handleTreatmentSelectorOpen = async () => {
      if (isDraft && onCreate) {
         const newId = await onCreate({});
@@ -77,7 +77,6 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
      }
   };
 
-  // 10% Reduced height: h-8 (32px) -> h-[29px]
   let rowClasses = 'group transition-colors border-l-4 h-[29px] '; 
   if (rowStatus === 'active') {
     rowClasses += 'bg-blue-50 dark:bg-blue-900/20 border-l-brand-500';
@@ -92,12 +91,11 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   }
 
   const isNoBedAssigned = !visit?.bed_id;
-  // Check if treatment name is empty
   const hasTreatment = !!visit?.treatment_name && visit.treatment_name.trim() !== '';
 
   return (
     <tr className={rowClasses}>
-      {/* 1. Bed ID - Keeps original logic (Not direct edit) */}
+      {/* 1. Bed ID - Keeps original logic (Moves/Assigns trigger sync unless right-click option used) */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0 relative">
         <BedSelectorCell 
           value={visit?.bed_id || null}
@@ -116,12 +114,12 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         )}
       </td>
 
-      {/* 2. Patient Name - Direct Edit Allowed */}
+      {/* 2. Patient Name - LOG ONLY EDIT */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.patient_name || ''} 
           placeholder={isDraft ? "새 환자" : "이름"}
-          menuTitle="이름 수정 옵션"
+          menuTitle="이름 수정 (로그만 변경)"
           className={`bg-transparent justify-center text-center ${
             !visit?.patient_name 
               ? 'font-normal text-gray-300 dark:text-gray-600' 
@@ -129,24 +127,24 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           } ${isDraft ? 'placeholder-gray-300 font-normal' : ''} text-sm sm:text-base xl:text-[11px]`}
           onCommit={(val, skipSync) => handleChange('patient_name', val || '', skipSync)}
           directEdit={true}
-          syncOnDirectEdit={true}
+          syncOnDirectEdit={false} /* FORCE LOG ONLY */
         />
       </td>
 
-      {/* 3. Body Part - Direct Edit Allowed */}
+      {/* 3. Body Part - LOG ONLY EDIT */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.body_part || ''} 
           placeholder={isDraft ? "부위" : ""}
-          menuTitle="치료 부위 수정"
+          menuTitle="치료 부위 수정 (로그만 변경)"
           className="text-gray-600 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('body_part', val || '', skipSync)}
           directEdit={true}
-          syncOnDirectEdit={true}
+          syncOnDirectEdit={false} /* FORCE LOG ONLY */
         />
       </td>
 
-      {/* 4. Treatment - Selector Cell */}
+      {/* 4. Treatment - Selector Cell (Sync managed by modal or text commit) */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0 relative">
         <TreatmentSelectorCell
           visit={visit}
@@ -155,41 +153,43 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           rowStatus={rowStatus}
           onCommitText={handleTreatmentTextCommit}
           onOpenSelector={handleTreatmentSelectorOpen}
-          // Direct Selector opens if: 1. No bed assigned (existing logic) OR 2. Bed is assigned but treatment is empty
           directSelector={isNoBedAssigned || (!hasTreatment && !!visit?.bed_id)}
         />
       </td>
 
-      {/* 5. Status Column (Icons) */}
+      {/* 5. Status Column (Icons) - LOG ONLY EDIT via new Component */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
-        <div className="w-full h-full flex items-center justify-center">
-            {visit && <PatientStatusIcons visit={visit} />}
-        </div>
+        <PatientStatusCell 
+            visit={visit} 
+            onUpdate={onUpdate || (() => {})} 
+            isDraft={isDraft}
+            onCreate={onCreate}
+        />
       </td>
 
-      {/* 6. Memo - Direct Edit Allowed */}
+      {/* 6. Memo - LOG ONLY EDIT */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.memo || ''} 
           placeholder=""
-          menuTitle="메모 수정 옵션"
+          menuTitle="메모 수정 (로그만 변경)"
           className="text-gray-500 dark:text-gray-400 font-bold bg-transparent justify-center text-center text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('memo', val || '', skipSync)}
           directEdit={true}
-          syncOnDirectEdit={true}
+          syncOnDirectEdit={false} /* FORCE LOG ONLY */
         />
       </td>
 
-      {/* 7. Author - Direct Edit Allowed */}
+      {/* 7. Author - LOG ONLY EDIT */}
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <EditableCell 
           value={visit?.author || ''} 
           placeholder="-"
-          menuTitle="작성자 수정"
+          menuTitle="작성자 수정 (로그만 변경)"
           className="text-center justify-center text-gray-500 font-bold bg-transparent text-xs sm:text-sm xl:text-[11px]"
           onCommit={(val, skipSync) => handleChange('author', val || '', skipSync)}
           directEdit={true}
-          syncOnDirectEdit={true}
+          syncOnDirectEdit={false} /* FORCE LOG ONLY */
         />
       </td>
 

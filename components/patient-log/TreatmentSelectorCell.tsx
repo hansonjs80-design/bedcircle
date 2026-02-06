@@ -38,11 +38,20 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
     e.stopPropagation();
     e.preventDefault();
 
+    // 1. Explicit directSelector prop is true (e.g., empty or no bed)
     if (directSelector) {
         onOpenSelector();
         return;
     }
+
+    // 2. CRITICAL UPDATE: Value exists AND row is NOT active (Unsynchronized/Completed)
+    // 배드와 동기화되지 않은 상태(비활성)이면서 내용이 있다면, 메뉴 없이 바로 선택창 오픈
+    if (value && rowStatus !== 'active') {
+        onOpenSelector();
+        return;
+    }
     
+    // 3. Active Row (Synchronized) -> Show Menu
     setMenuPos({ x: e.clientX, y: e.clientY });
     setMode('menu');
   };
@@ -82,7 +91,7 @@ export const TreatmentSelectorCell: React.FC<TreatmentSelectorCellProps> = ({
             ) : (
                 <div 
                     className="flex items-center w-full h-full cursor-pointer px-1 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
-                    title={directSelector ? "더블클릭하여 처방 선택" : "더블클릭하여 수정 옵션 열기"}
+                    title={directSelector || (value && rowStatus !== 'active') ? "더블클릭하여 처방 선택" : "더블클릭하여 수정 옵션 열기"}
                 >
                     <div className="flex-1 min-w-0 flex justify-center">
                          <span className={`text-xs sm:text-sm xl:text-[11px] font-bold truncate pointer-events-none text-center w-full ${!value ? 'text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'}`}>

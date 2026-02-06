@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { memo } from 'react';
 import { PatientVisit } from '../../types';
 import { PatientLogRow } from './PatientLogRow';
 import { PatientLogTableHeader } from './PatientLogTableHeader';
@@ -13,7 +14,7 @@ interface PatientLogTableProps {
   onMovePatient: (visitId: string, currentBedId: number, newBedId: number) => void;
 }
 
-export const PatientLogTable: React.FC<PatientLogTableProps> = ({
+export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
   visits,
   getRowStatus,
   onUpdate,
@@ -56,4 +57,4 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = ({
       </table>
     </div>
   );
-};
+});
