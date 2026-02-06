@@ -69,11 +69,11 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
       <div className={`h-8 sm:h-12 landscape:h-[34px] sm:landscape:h-[30px] lg:landscape:h-11 w-full flex items-center px-2 sm:px-2 border-b border-black/10 shrink-0 gap-2 sm:gap-2 relative transition-colors ${getBedHeaderStyles(bed)}`}>
         {/* Bed ID Indicator */}
         <div 
-          className="flex items-center justify-center min-w-[2rem] sm:min-w-[3rem] h-full -ml-0.5 landscape:-ml-3 lg:landscape:-ml-0.5 cursor-pointer touch-manipulation active:scale-95 transition-transform select-none -translate-x-[5px] sm:translate-x-0 landscape:-translate-x-[8px] lg:landscape:translate-x-0"
+          className="flex items-center justify-center min-w-[2rem] sm:min-w-[3rem] h-full -ml-0.5 landscape:-ml-3 lg:landscape:-ml-0.5 cursor-pointer touch-manipulation active:scale-95 transition-transform select-none -translate-x-[5px] sm:-translate-x-2 landscape:-translate-x-[8px] lg:landscape:-translate-x-2"
           onDoubleClick={handleBedNumberDoubleClick}
           title="더블클릭하여 환자 이동"
         >
-          <span className={`font-black leading-none tracking-tighter ${getBedNumberColor(bed)} text-2xl sm:text-4xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-2xl`}>
+          <span className={`font-black leading-none tracking-tighter ${getBedNumberColor(bed)} text-2xl sm:text-4xl xl:text-5xl landscape:text-3xl sm:landscape:text-base lg:landscape:text-3xl`}>
             {isBedT ? 'T' : bed.id}
           </span>
         </div>
@@ -97,7 +97,7 @@ export const BedHeader = memo(({ bed, currentStep, onTrashClick, trashState, onE
               {/* Pause Button */}
               <button 
                 onClick={handleTogglePause}
-                className={`p-1 landscape:p-0.5 sm:p-2 rounded-lg transition-all active:scale-90 flex items-center justify-center -translate-x-[8px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
+                className={`p-1 landscape:p-0.5 sm:p-2 rounded-lg transition-all active:scale-90 flex items-center justify-center -translate-x-[13px] sm:translate-x-0 landscape:-translate-x-[10px] lg:landscape:translate-x-0 ${
                   bed.isPaused 
                     ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' 
                     : isBedT 
