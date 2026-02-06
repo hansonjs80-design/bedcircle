@@ -21,6 +21,7 @@ interface PatientLogRowProps {
   activeStepColor?: string;
   activeStepIndex?: number;
   onNextStep?: () => void;
+  onPrevStep?: () => void;
 }
 
 export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
@@ -36,7 +37,8 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   activeBedIds = [],
   activeStepColor,
   activeStepIndex = -1,
-  onNextStep
+  onNextStep,
+  onPrevStep
 }) => {
   
   const handleAssign = async (newBedId: number) => {
@@ -207,6 +209,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           activeStepColor={activeStepColor}
           activeStepIndex={activeStepIndex}
           onNextStep={onNextStep}
+          onPrevStep={onPrevStep}
         />
       </td>
 

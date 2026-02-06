@@ -17,6 +17,7 @@ interface PatientLogTableProps {
   onMovePatient: (visitId: string, currentBedId: number, newBedId: number) => void;
   onEditActive?: (bedId: number) => void;
   onNextStep?: (bedId: number) => void;
+  onPrevStep?: (bedId: number) => void;
 }
 
 export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
@@ -30,7 +31,8 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
   onSelectLog,
   onMovePatient,
   onEditActive,
-  onNextStep
+  onNextStep,
+  onPrevStep
 }) => {
   // 항상 10개의 빈 행을 유지하여 연속 입력 편의성 제공
   const EMPTY_ROWS_COUNT = 10;
@@ -50,6 +52,7 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
             let activeStepColorClass: string | undefined = undefined;
             let activeStepIndex: number = -1;
             let handleNextStep: (() => void) | undefined = undefined;
+            let handlePrevStep: (() => void) | undefined = undefined;
 
             if (rowStatus === 'active' && visit.bed_id) {
                const bed = beds.find(b => b.id === visit.bed_id);
@@ -65,6 +68,9 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
                      // If onNextStep provided, create handler
                      if (onNextStep) {
                         handleNextStep = () => onNextStep(bed.id);
+                     }
+                     if (onPrevStep) {
+                        handlePrevStep = () => onPrevStep(bed.id);
                      }
                   }
                }
@@ -85,6 +91,7 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
                 activeStepColor={activeStepColorClass}
                 activeStepIndex={activeStepIndex}
                 onNextStep={handleNextStep}
+                onPrevStep={handlePrevStep}
               />
             );
           })}
