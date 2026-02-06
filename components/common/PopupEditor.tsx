@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Save, X } from 'lucide-react';
 
 interface PopupEditorProps {
@@ -82,7 +83,7 @@ export const PopupEditor: React.FC<PopupEditorProps> = ({
     ? {} 
     : { top: pos.y, left: pos.x };
 
-  return (
+  return createPortal(
     <div 
       className={overlayClass}
       onClick={onCancel}
@@ -137,6 +138,7 @@ export const PopupEditor: React.FC<PopupEditorProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

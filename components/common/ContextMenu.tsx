@@ -1,5 +1,6 @@
 
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ContextMenuProps {
@@ -47,7 +48,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     }
   }, [position]);
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-[9999] bg-transparent"
       onClick={(e) => {
@@ -82,6 +83,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

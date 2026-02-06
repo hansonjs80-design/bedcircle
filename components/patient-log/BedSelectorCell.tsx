@@ -9,7 +9,8 @@ interface BedSelectorCellProps {
   onAssign: (newBedId: number) => void;
   className?: string;
   onUpdateLogOnly?: (newBedId: number) => void; 
-  rowStatus?: 'active' | 'completed' | 'none'; // Added rowStatus to check active state
+  rowStatus?: 'active' | 'completed' | 'none';
+  hasTreatment?: boolean;
 }
 
 export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({ 
@@ -18,7 +19,8 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   onAssign,
   className,
   onUpdateLogOnly,
-  rowStatus = 'none'
+  rowStatus = 'none',
+  hasTreatment = true
 }) => {
   const [mode, setMode] = useState<'view' | 'menu' | 'edit_log' | 'edit_assign' | 'select_target'>('view');
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
@@ -35,17 +37,23 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
     e.stopPropagation();
     e.preventDefault();
 
-    // SPECIAL LOGIC: Active Bed Double Click
+    setMenuPos({ x: e.clientX, y: e.clientY });
+
+    // 1. If Treatment is empty, open selection immediately (No Confirmation)
+    if (!hasTreatment) {
+        setMode('select_target');
+        return;
+    }
+
+    // 2. SPECIAL LOGIC: Active Bed Double Click -> Confirm then Select
     if (rowStatus === 'active') {
         if (window.confirm("방번호를 변경하시겠습니까?")) {
-            setMenuPos({ x: e.clientX, y: e.clientY });
             setMode('select_target');
         }
         return;
     }
 
-    // Default behavior for other states
-    setMenuPos({ x: e.clientX, y: e.clientY });
+    // 3. Default behavior for other states (Context Menu)
     setMode('menu');
   };
 
@@ -79,23 +87,25 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
   };
 
   const renderContent = () => {
-    // 1. Target Selection Mode (Grid 1-10) for Active Bed Change
+    // 1. Target Selection Mode (Grid 1-10 + 11(T))
     if (mode === 'select_target') {
         return (
             <ContextMenu
-                title="이동할 배드 선택 (1~10)"
+                title="배드 선택 (1~10, T)"
                 position={menuPos}
                 onClose={() => setMode('view')}
-                width={200}
+                width={220}
             >
                 <div className="p-2">
                     <div className="grid grid-cols-5 gap-1.5">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => (
                             <button
                                 key={num}
                                 onClick={() => {
                                     if (value && num !== value) {
                                         onMove(num);
+                                    } else if (!value || value !== num) {
+                                        onAssign(num);
                                     }
                                     setMode('view');
                                 }}
@@ -108,19 +118,16 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
                                 `}
                                 disabled={value === num}
                             >
-                                {num}
+                                {num === 11 ? 'T' : num}
                             </button>
                         ))}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 text-center">
-                        * 11번(견인) 제외
-                    </p>
                 </div>
             </ContextMenu>
         );
     }
 
-    // 2. Input Mode (Log or Assign)
+    // 2. Input Mode (Log or Assign) - Legacy fallback or manual menu trigger
     if (mode === 'edit_log' || mode === 'edit_assign') {
         return (
             <ContextMenu
@@ -153,10 +160,23 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
     if (mode === 'menu') {
         return (
             <ContextMenu
-                title={`방 번호 수정 (현재: ${value || '-'})`}
+                title={`방 번호 수정 (현재: ${value === 11 ? 'T' : value || '-'})`}
                 position={menuPos}
                 onClose={() => setMode('view')}
             >
+                <button 
+                    onClick={() => setMode('select_target')}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left group"
+                >
+                    <div className="p-2 bg-brand-100 dark:bg-brand-900 rounded-full group-hover:bg-white dark:group-hover:bg-brand-800 shadow-sm">
+                        <PlayCircle className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    </div>
+                    <div>
+                        <span className="block text-sm font-bold text-gray-800 dark:text-gray-200">배드 선택 (이동/배정)</span>
+                        <span className="block text-[10px] text-gray-500 dark:text-gray-400">목록에서 번호 선택</span>
+                    </div>
+                </button>
+
                 <button 
                     onClick={() => setMode('edit_log')}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-left group"
@@ -165,21 +185,8 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
                         <Edit3 className="w-4 h-4 text-gray-500 dark:text-gray-300" />
                     </div>
                     <div>
-                        <span className="block text-sm font-bold text-gray-800 dark:text-gray-200">단순 수정</span>
+                        <span className="block text-sm font-bold text-gray-800 dark:text-gray-200">단순 수정 (텍스트)</span>
                         <span className="block text-[10px] text-gray-500 dark:text-gray-400">로그만 변경 (배드 미작동)</span>
-                    </div>
-                </button>
-
-                <button 
-                    onClick={() => setMode('edit_assign')}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left group"
-                >
-                    <div className="p-2 bg-brand-100 dark:bg-brand-900 rounded-full group-hover:bg-white dark:group-hover:bg-brand-800 shadow-sm">
-                        <PlayCircle className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                    </div>
-                    <div>
-                        <span className="block text-sm font-bold text-gray-800 dark:text-gray-200">배드 배정/이동</span>
-                        <span className="block text-[10px] text-gray-500 dark:text-gray-400">배드 활성화 및 환자 이동</span>
                     </div>
                 </button>
             </ContextMenu>
@@ -193,11 +200,11 @@ export const BedSelectorCell: React.FC<BedSelectorCellProps> = ({
         <div 
         onDoubleClick={handleDoubleClick}
         className={`w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors group select-none ${className}`}
-        title={rowStatus === 'active' ? "더블클릭하여 방번호 변경" : "더블클릭하여 수정/배정 메뉴 열기"}
+        title={!hasTreatment ? "더블클릭하여 배드 선택" : (rowStatus === 'active' ? "더블클릭하여 방번호 변경" : "더블클릭하여 수정/배정 메뉴 열기")}
         >
         {value ? (
-            <span className="text-base sm:text-lg xl:text-[12px] font-black text-slate-700 dark:text-slate-200 group-hover:scale-110 transition-transform">
-            {value}
+            <span className={`text-base sm:text-lg xl:text-[12px] font-black group-hover:scale-110 transition-transform ${value === 11 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}>
+            {value === 11 ? 'T' : value}
             </span>
         ) : (
             <span className="text-gray-300 dark:text-gray-600 text-sm xl:text-[12px] font-bold">-</span>

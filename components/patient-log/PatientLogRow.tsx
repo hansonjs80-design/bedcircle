@@ -92,6 +92,8 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   }
 
   const isNoBedAssigned = !visit?.bed_id;
+  // Check if treatment name is empty
+  const hasTreatment = !!visit?.treatment_name && visit.treatment_name.trim() !== '';
 
   return (
     <tr className={rowClasses}>
@@ -100,6 +102,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
         <BedSelectorCell 
           value={visit?.bed_id || null}
           rowStatus={rowStatus}
+          hasTreatment={hasTreatment}
           onMove={handleMove}
           onAssign={handleAssign}
           onUpdateLogOnly={handleUpdateLogOnly}
