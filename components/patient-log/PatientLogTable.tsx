@@ -10,7 +10,7 @@ interface PatientLogTableProps {
   onUpdate: (id: string, updates: Partial<PatientVisit>, skipBedSync?: boolean) => void;
   onDelete: (id: string) => void;
   onCreate: (updates: Partial<PatientVisit>) => Promise<string>;
-  onSelectLog: (id: string) => void;
+  onSelectLog: (id: string, bedId?: number | null) => void;
   onMovePatient: (visitId: string, currentBedId: number, newBedId: number) => void;
   onEditActive?: (bedId: number) => void;
   activeBedIds?: number[];
@@ -56,7 +56,7 @@ export const PatientLogTable: React.FC<PatientLogTableProps> = memo(({
               key={`draft-${index}`}
               isDraft={true}
               onCreate={onCreate}
-              onSelectLog={onSelectLog}
+              onSelectLog={(id) => onSelectLog(id, null)} // Draft doesn't have assignment logic yet
               activeBedIds={activeBedIds}
             />
           ))}

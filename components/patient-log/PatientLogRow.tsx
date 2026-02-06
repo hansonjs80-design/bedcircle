@@ -14,7 +14,7 @@ interface PatientLogRowProps {
   onUpdate?: (id: string, updates: Partial<PatientVisit>, skipBedSync?: boolean) => void;
   onDelete?: (id: string) => void;
   onCreate?: (updates: Partial<PatientVisit>) => Promise<string>;
-  onSelectLog?: (id: string) => void;
+  onSelectLog?: (id: string, bedId?: number | null) => void;
   onMovePatient?: (visitId: string, currentBedId: number, newBedId: number) => void;
   onEditActive?: (bedId: number) => void;
   activeBedIds?: number[];
@@ -61,27 +61,53 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
      }
   };
 
+  // Direct Text Input: 
+  // If Assignment Mode -> Activate Bed
+  // If Edit Mode -> Log Only
   const handleTreatmentTextCommit = async (val: string) => {
      if (isDraft && onCreate) {
         await onCreate({ treatment_name: val });
-     } else if (!isDraft && visit && onUpdate) {
-        onUpdate(visit.id, { treatment_name: val }, true);
+        return;
+     } 
+     
+     if (!isDraft && visit && onUpdate) {
+        // Condition: Bed exists, Treatment was empty, Now entering value
+        const isAssignmentMode = !!visit.bed_id && (!visit.treatment_name || visit.treatment_name.trim() === '');
+        
+        // If Assignment Mode, do NOT skip sync (Activate Bed)
+        // If Edit Mode, skip sync (Log Only)
+        onUpdate(visit.id, { treatment_name: val }, !isAssignmentMode);
      }
   };
 
   const handleTreatmentSelectorOpen = async () => {
-     // 1. Live Active Row -> Bed Edit Overlay
+     // 1. Live Active Row -> Bed Edit Overlay (Existing)
      if (rowStatus === 'active' && visit && visit.bed_id && onEditActive) {
          onEditActive(visit.bed_id);
          return;
      }
 
-     // 2. Draft or Log Edit -> Preset Modal
      if (isDraft && onCreate) {
         const newId = await onCreate({});
-        if (onSelectLog) onSelectLog(newId);
-     } else if (!isDraft && visit && onSelectLog) {
-        onSelectLog(visit.id);
+        if (onSelectLog) onSelectLog(newId); // Default behavior
+        return;
+     } 
+     
+     if (!isDraft && visit && onSelectLog) {
+        // --- LOGIC SEPARATION ---
+        
+        // Condition 1: Assignment Mode (Bed assigned, Treatment empty)
+        // User wants to start treatment now.
+        // We pass the bedId so GlobalModals knows to attempt activation.
+        if (visit.bed_id && (!visit.treatment_name || visit.treatment_name.trim() === '')) {
+            onSelectLog(visit.id, visit.bed_id); 
+        } 
+        // Condition 2: Log Edit Mode (Bed assigned, Treatment exists, Inactive)
+        // User wants to edit text only.
+        // We pass null for bedId so GlobalModals treats it as pure log edit.
+        else {
+            onSelectLog(visit.id, null); 
+        }
      }
   };
 
@@ -101,9 +127,11 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
   const isNoBedAssigned = !visit?.bed_id;
   const hasTreatment = !!visit?.treatment_name && visit.treatment_name.trim() !== '';
   
-  // LOG EDIT MODE DEFINITION
-  // Row has data (Bed & Treatment) AND is NOT currently active (e.g. completed, offline, history)
+  // LOG EDIT MODE DEFINITION (Strict)
   const isLogEditMode = !isDraft && !!visit?.bed_id && hasTreatment && rowStatus !== 'active';
+  
+  // ASSIGNMENT MODE DEFINITION
+  const isAssignmentMode = !isDraft && !!visit?.bed_id && !hasTreatment;
 
   return (
     <tr className={rowClasses}>
@@ -167,8 +195,8 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
           rowStatus={rowStatus}
           onCommitText={handleTreatmentTextCommit}
           onOpenSelector={handleTreatmentSelectorOpen}
-          // Enable direct selector on double click for Log Edit Mode
-          directSelector={isNoBedAssigned || (!hasTreatment && !!visit?.bed_id) || isLogEditMode}
+          // Enable direct selector if: No bed assigned OR No treatment entered OR Log Edit Mode
+          directSelector={isNoBedAssigned || !hasTreatment || isLogEditMode}
         />
       </td>
 

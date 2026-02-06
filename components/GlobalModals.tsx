@@ -46,10 +46,8 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     updateVisitWithBedSync
   } = useTreatmentContext();
 
-  // Consume visits from PatientLogContext directly
   const { visits } = usePatientLogContext();
 
-  // Helper to map options to log flags
   const mapOptionsToFlags = (options: any) => ({
     is_injection: options?.isInjection,
     is_fluid: options?.isFluid,
@@ -58,81 +56,114 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
     is_manual: options?.isManual,
   });
 
-  // --- STRICT SEPARATION OF LOGIC ---
+  // --- LOGIC SEPARATION ---
+  // 1. Pure Log Edit: selectingLogId is SET, selectingBedId is NULL.
+  // 2. Assignment from Log: selectingLogId is SET, selectingBedId is SET.
+  // 3. Manual Bed Control: selectingLogId is NULL, selectingBedId is SET.
 
-  // 1. Preset Selection Handler
   const handleSelectPreset = (bedId: number, presetId: string, options: any) => {
     if (selectingLogId) {
-      // [LOG EDIT MODE]
-      // CRITICAL: Pass 'true' (skipBedSync) to PREVENT bed activation.
-      // We only want to update the text record.
       const preset = presets.find(p => p.id === presetId);
       if (preset) {
-        updateVisitWithBedSync(selectingLogId, {
-          treatment_name: generateTreatmentString(preset.steps),
-          ...mapOptionsToFlags(options)
-        }, true); 
+        if (selectingBedId) {
+            // [CASE 2: Assignment Mode]
+            // Bed exists in Log, Treatment Empty -> User selected preset.
+            // Action: Update Log with Treatment Name + Sync (False) to trigger Bed Activation & Conflict Check.
+            updateVisitWithBedSync(selectingLogId, {
+                treatment_name: generateTreatmentString(preset.steps),
+                ...mapOptionsToFlags(options)
+            }, false); // <--- DO NOT SKIP SYNC. This triggers activation prompt.
+        } else {
+            // [CASE 1: Log Edit Mode]
+            // Bed assigned, Treatment exists -> User editing log only.
+            updateVisitWithBedSync(selectingLogId, {
+                treatment_name: generateTreatmentString(preset.steps),
+                ...mapOptionsToFlags(options)
+            }, true); // <--- FORCE SKIP SYNC. Log text only.
+        }
       }
       setSelectingLogId(null);
+      setSelectingBedId(null);
     } else {
-      // [LIVE BED CONTROL]
+      // [CASE 3: Manual Control]
       selectPreset(bedId, presetId, options);
       setSelectingBedId(null);
     }
   };
 
-  // 2. Custom Start Handler
   const handleCustomStart = (bedId: number, name: string, steps: TreatmentStep[], options: any) => {
     if (selectingLogId) {
-       // [LOG EDIT MODE]
-       updateVisitWithBedSync(selectingLogId, {
-         treatment_name: generateTreatmentString(steps),
-         ...mapOptionsToFlags(options)
-       }, true);
+       if (selectingBedId) {
+           // [CASE 2: Assignment Mode]
+           updateVisitWithBedSync(selectingLogId, {
+             treatment_name: generateTreatmentString(steps),
+             ...mapOptionsToFlags(options)
+           }, false);
+       } else {
+           // [CASE 1: Log Edit Mode]
+           updateVisitWithBedSync(selectingLogId, {
+             treatment_name: generateTreatmentString(steps),
+             ...mapOptionsToFlags(options)
+           }, true);
+       }
        setSelectingLogId(null);
+       setSelectingBedId(null);
     } else {
-       // [LIVE BED CONTROL]
+       // [CASE 3: Manual Control]
        startCustomPreset(bedId, name, steps, options);
        setSelectingBedId(null);
     }
   };
 
-  // 3. Quick Start Handler
   const handleQuickStart = (bedId: number, template: QuickTreatment, options: any) => {
     if (selectingLogId) {
-      // [LOG EDIT MODE]
-      updateVisitWithBedSync(selectingLogId, {
-        treatment_name: template.label || template.name,
-        ...mapOptionsToFlags(options)
-      }, true);
+      if (selectingBedId) {
+          // [CASE 2: Assignment Mode]
+          updateVisitWithBedSync(selectingLogId, {
+            treatment_name: template.label || template.name,
+            ...mapOptionsToFlags(options)
+          }, false);
+      } else {
+          // [CASE 1: Log Edit Mode]
+          updateVisitWithBedSync(selectingLogId, {
+            treatment_name: template.label || template.name,
+            ...mapOptionsToFlags(options)
+          }, true);
+      }
       setSelectingLogId(null);
+      setSelectingBedId(null);
     } else {
-      // [LIVE BED CONTROL]
+      // [CASE 3: Manual Control]
       startQuickTreatment(bedId, template, options);
       setSelectingBedId(null);
     }
   };
   
-  // 4. Traction Start Handler
   const handleStartTraction = (bedId: number, duration: number, options: any) => {
     if (selectingLogId) {
-       // [LOG EDIT MODE]
        const { is_traction: _ignored, ...otherFlags } = mapOptionsToFlags(options);
        const updatePayload = {
          treatment_name: '견인',
          ...otherFlags,
          is_traction: true
        };
-       updateVisitWithBedSync(selectingLogId, updatePayload, true);
+
+       if (selectingBedId) {
+           // [CASE 2: Assignment Mode]
+           updateVisitWithBedSync(selectingLogId, updatePayload, false);
+       } else {
+           // [CASE 1: Log Edit Mode]
+           updateVisitWithBedSync(selectingLogId, updatePayload, true);
+       }
        setSelectingLogId(null);
+       setSelectingBedId(null);
     } else {
-       // [LIVE BED CONTROL]
+       // [CASE 3: Manual Control]
        startTraction(bedId, duration, options);
        setSelectingBedId(null);
     }
   };
   
-  // 5. Clear Log Handler (Log Mode Only)
   const handleClearLog = () => {
     if (selectingLogId) {
       updateVisitWithBedSync(selectingLogId, {
@@ -144,10 +175,10 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
         is_manual: false,
       }, true);
       setSelectingLogId(null);
+      setSelectingBedId(null); // Ensure cleaned up
     }
   };
 
-  // Determine active log entry and initial values for the modal
   const activeLogEntry = useMemo(() => {
     if (!selectingLogId) return null;
     return visits.find(v => v.id === selectingLogId) || null;
@@ -179,7 +210,10 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({ isMenuOpen, onCloseM
   const editingBedSteps = editingBed ? (editingBed.customPreset?.steps || presets.find(p => p.id === editingBed.currentPresetId)?.steps || []) : [];
 
   const isModalOpen = selectingBedId !== null || selectingLogId !== null;
-  // If editing a log, pass 0 as dummy ID to signal "Log Mode" to the modal
+  
+  // Logic for Modal ID:
+  // If selectingBedId is present, use it (Assignment or Manual).
+  // If selectingBedId is NULL but LogID is set, pass 0 (Edit Mode).
   const targetBedIdForModal = selectingBedId !== null ? selectingBedId : (selectingLogId ? 0 : null);
 
   return (

@@ -16,7 +16,7 @@ interface PatientLogPanelProps {
 }
 
 export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => {
-  const { setSelectingLogId, beds, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
+  const { setSelectingLogId, setSelectingBedId, beds, movePatient, updateVisitWithBedSync, setEditingBedId } = useTreatmentContext();
   const { visits, currentDate, setCurrentDate, changeDate, addVisit, deleteVisit } = usePatientLogContext();
   
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -38,6 +38,14 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
       movePatient(currentBedId, newBedId);
   }, [movePatient]);
 
+  // Wrapper for selecting log
+  const handleSelectLog = useCallback((logId: string, bedId?: number | null) => {
+      setSelectingLogId(logId);
+      // If bedId is provided (Assignment Mode), set it to trigger Bed Logic.
+      // If bedId is null/undefined (Edit Mode), reset it.
+      setSelectingBedId(bedId || null);
+  }, [setSelectingLogId, setSelectingBedId]);
+
   return (
     <>
       <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 shadow-xl print:hidden">
@@ -57,7 +65,7 @@ export const PatientLogPanel: React.FC<PatientLogPanelProps> = ({ onClose }) => 
           onUpdate={updateVisitWithBedSync}
           onDelete={deleteVisit}
           onCreate={addVisit}
-          onSelectLog={setSelectingLogId}
+          onSelectLog={handleSelectLog}
           onMovePatient={handleMovePatient}
           onEditActive={setEditingBedId}
           activeBedIds={activeBedIds}
