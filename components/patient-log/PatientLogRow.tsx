@@ -232,6 +232,7 @@ export const PatientLogRow: React.FC<PatientLogRowProps> = memo(({
       <td className="border-r border-gray-100 dark:border-slate-800 p-0">
         <PatientStatusCell 
             visit={visit} 
+            rowStatus={rowStatus}
             onUpdate={onUpdate || (() => {})} 
             isDraft={isDraft}
             onCreate={onCreate}

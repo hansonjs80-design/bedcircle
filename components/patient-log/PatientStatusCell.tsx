@@ -7,6 +7,7 @@ import { PatientStatusIcons } from './PatientStatusIcons';
 
 interface PatientStatusCellProps {
   visit?: PatientVisit;
+  rowStatus?: 'active' | 'completed' | 'none';
   onUpdate: (id: string, updates: Partial<PatientVisit>, skipBedSync?: boolean) => void;
   isDraft?: boolean;
   onCreate?: (updates: Partial<PatientVisit>) => Promise<string>;
@@ -14,6 +15,7 @@ interface PatientStatusCellProps {
 
 export const PatientStatusCell: React.FC<PatientStatusCellProps> = ({ 
   visit, 
+  rowStatus = 'none',
   onUpdate,
   isDraft,
   onCreate
@@ -33,8 +35,10 @@ export const PatientStatusCell: React.FC<PatientStatusCellProps> = ({
     if (isDraft && onCreate) {
         await onCreate({ [key]: newVal });
     } else if (visit) {
-        // CRITICAL: Pass 'true' for skipBedSync to prevent affecting the Bed Card
-        onUpdate(visit.id, { [key]: newVal }, true);
+        // If row is active, sync with bed (skipBedSync = false).
+        // Otherwise, simple record (skipBedSync = true).
+        const skipSync = rowStatus !== 'active';
+        onUpdate(visit.id, { [key]: newVal }, skipSync);
     }
   };
 
@@ -46,12 +50,14 @@ export const PatientStatusCell: React.FC<PatientStatusCellProps> = ({
     { key: 'is_traction', label: '견인 (Traction)', icon: ArrowUpFromLine, color: 'text-orange-500' },
   ];
 
+  const menuTitle = rowStatus === 'active' ? "상태 변경 (배드 연동)" : "상태 변경 (단순 기록)";
+
   return (
     <>
         <div 
             className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
             onDoubleClick={handleDoubleClick}
-            title="더블클릭하여 상태 변경 (로그만 수정)"
+            title={`더블클릭하여 상태 변경 (${rowStatus === 'active' ? '배드 연동' : '로그만 수정'})`}
         >
             {visit ? (
                 <PatientStatusIcons visit={visit} />
@@ -64,7 +70,7 @@ export const PatientStatusCell: React.FC<PatientStatusCellProps> = ({
 
         {menuPos && (
             <ContextMenu
-                title="상태 변경 (단순 기록)"
+                title={menuTitle}
                 position={menuPos}
                 onClose={() => setMenuPos(null)}
             >
